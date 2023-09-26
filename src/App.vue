@@ -1,14 +1,14 @@
 <template>
-  <LoginScene />
+  <Login />
   <SustechMap />
 </template>
 
 <script>
 import SustechMap from './components/SustechMap.vue'
-import LoginScene from './components/LoginScene.vue'
+import Login from './components/Login.vue'
 export default {
   components: {
-    LoginScene,
+    Login,
     SustechMap
   }
 }
