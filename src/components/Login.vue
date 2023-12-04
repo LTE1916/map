@@ -25,6 +25,7 @@
 <script>
 
 import axios from "axios";
+import SustechMap from "@/components/SustechMap.vue";
 
 export default {
   name: "LogIn",
@@ -47,6 +48,8 @@ export default {
     login() {
   axios.get("http://10.26.158.225:8080/building").then(res => {
     console.log(res.data);
+    //需要检查用户名和密码
+    SustechMap.username = this.user.name;
   }).catch((err) => console.log(err));
     }
     // {
