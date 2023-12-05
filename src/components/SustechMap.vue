@@ -6,12 +6,20 @@
       </div>
   </div>
     <el-popover
-        v-model:visible="popoverVisible"
-        placement="top"
-        title="Building Information"
-        width="200"
-        content="Content of the popover"
-    >
+        v-model:visible= popoverVisible
+        trigger="manual"
+        :title="title"
+        width="500"
+        height = "1600"
+        :content="introduction"
+        :style="{ top: popoverTop, left: popoverLeft }">
+
+
+        <!-- 添加一个关闭按钮用于手动关闭弹出框 -->
+        <button @click="popoverVisible = false">Close</button>
+        <!-- 添加弹出内容 -->
+        ...
+
       <div>Building Information</div>
     </el-popover>
   </div>
@@ -33,6 +41,23 @@ export default {
   },
   setup(){
     const popoverVisible = ref(false);
+    const title = ref('');
+    const introduction = ref('');
+    const username = ref("");
+    const authority = ref("");
+    const library1 = ref(null);
+    const library2 = ref(null);
+    const library3 = ref(null);
+    const dormitory1= ref(null);
+    const dormitory2 = ref(null);
+    const dormitory3 = ref(null);
+    const dormitory4 = ref(null);
+    const dormitory5 = ref(null);
+    const dormitory6 = ref(null);
+    const dormitory7 = ref(null);
+    const dormitory8 = ref(null);
+    const dormitory9 = ref(null);
+    const dormitory10 = ref(null);
     const dormitory11 = ref(null);
     const dormitory12 = ref(null);
     const dormitory13 = ref(null);
@@ -40,6 +65,61 @@ export default {
     const dormitory15 = ref(null);
     const dormitory16 = ref(null);
     const dormitory17 = ref(null);
+    const cafeteria1 = ref(null)
+    const  cafeteria2 = ref(null)
+    const  cafeteria3 = ref(null)
+    const cafeteria4 = ref(null)
+    const cafeteria5 = ref(null)
+    const cafeteria6 = ref(null)
+    const teaching_building1 = ref(null)
+    const teaching_building2 = ref(null)
+    const teaching_building3 = ref(null)
+    const college1 = ref(null)
+    const college2 = ref(null)
+    const college3 = ref(null)
+    const college4 = ref(null)
+    const college5 = ref(null)
+    const jiu_hua = ref(null)
+    const office = ref(null)
+    const popoverTop = ref(0);
+    const popoverLeft = ref(0);
+    const faculty_apartment1 = ref(null)
+    const faculty_apartment2 = ref(null)
+    const faculty_apartment3 = ref(null)
+    const faculty_apartment4 = ref(null)
+    const faculty_apartment5 = ref(null)
+    const faculty_apartment6 = ref(null)
+    const gym1 = ref(null)
+    const gym2 = ref(null)
+    const gym3 = ref(null)
+
+
+    const handleDormitoryClick = ($event) => {
+      popoverVisible.value = true;
+      console.log($event.target._originOpts.title)
+
+
+      title.value = $event.target._originOpts.title;
+      introduction.value = 'this is the introduction of '+$event.target._originOpts.title
+          +$event.target._originOpts.label.content;
+      const x = $event.pixel.x
+      const y = $event.pixel.y;
+      popoverTop.value = `${y}px`;
+      popoverLeft.value = `${x}px`;
+      console.log(username.value)
+
+      axios.get('http://localhost:8080/building', {
+        params: {
+          buildingName: title.value ,
+          userName: 'exampleName', //替换成具体的用户名或者从组件的props中获取
+        }
+      })
+      .then((res) => {
+
+        console.log(res.data);
+      })
+      .catch((err) => console.log(err));
+    };
     onMounted(() => {
       AMapLoader.load({ key: 'c7a4dd8b9777a66796d5b71cf0839982', version: '2.0' }).then((AMap) => {
         const map = new AMap.Map('container', {
@@ -70,7 +150,90 @@ export default {
             }
           });
         });
-        dormitory11.value = new AMap.Marker({
+
+        const markers = [];
+
+        dormitory1.value   = new AMap.Marker({
+          position: [113.998653,22.599186],
+          title: '学生宿舍1栋',
+          label: {
+            content: '学生宿舍1栋',
+            visible: true,
+          },
+        });
+        dormitory2.value   = new AMap.Marker({
+          position: [113.998637,22.599661],
+          title: '学生宿舍2栋',
+          label: {
+            content: '学生宿舍2栋',
+            visible: true,
+          },
+        });
+        dormitory3.value   = new AMap.Marker({
+          position: [113.99853,22.600201],
+          title: '学生宿舍3栋',
+          label: {
+            content: '学生宿舍3栋',
+            visible: true,
+          },
+        });
+        dormitory4.value   = new AMap.Marker({
+          position: [113.998835,22.600657],
+          title: '学生宿舍4栋',
+          label: {
+            content: '学生宿舍4栋',
+            visible: true,
+          },
+        });
+        dormitory5.value   = new AMap.Marker({
+          position: [113.999377,22.600969],
+          title: '学生宿舍5栋',
+          label: {
+            content: '学生宿舍5栋',
+            visible: true,
+          },
+        });
+        dormitory6.value   = new AMap.Marker({
+          position: [113.999613,22.600677],
+          title: '学生宿舍6栋',
+          label: {
+            content: '学生宿舍6栋',
+            visible: true,
+          },
+        });
+        dormitory7.value   = new AMap.Marker({
+          position: [113.997373,22.601922],
+          title: '学生宿舍7栋',
+          label: {
+            content: '学生宿舍7栋',
+            visible: true,
+          },
+        });
+        dormitory8.value   = new AMap.Marker({
+          position: [113.997448,22.601318],
+          title: '学生宿舍8栋',
+          label: {
+            content: '学生宿舍8栋',
+            visible: true,
+          },
+        });
+        dormitory9.value   = new AMap.Marker({
+          position: [113.997936,22.601714],
+          title: '学生宿舍9栋',
+          label: {
+            content: '学生宿舍9栋',
+            visible: true,
+          },
+        });
+        dormitory10.value  = new AMap.Marker({
+          position: [113.998376,22.602091],
+          title: '学生宿舍10栋',
+          label: {
+            content: '学生宿舍10栋',
+            visible: true,
+          },
+        });
+        dormitory11.value  = new AMap.Marker({
           position: [113.999061, 22.602202],
           title: '学生宿舍11栋',
           label: {
@@ -101,7 +264,7 @@ export default {
             content: "学生宿舍14栋",
             visible: true,
           },
-        })
+        });
         dormitory15.value  = new AMap.Marker({
           position: [114.000439,22.602231],
           title: "学生宿舍15栋",
@@ -109,7 +272,7 @@ export default {
             content: "学生宿舍15栋",
             visible: true,
           },
-        })
+        });
         dormitory16.value  = new AMap.Marker({
           position: [114.00098,22.602543],
           title: "学生宿舍16栋",
@@ -117,7 +280,7 @@ export default {
             content: "学生宿舍16栋",
             visible: true,
           },
-        })
+        });
         dormitory17.value  = new AMap.Marker({
           position: [114.000921,22.602979],
           title: "学生宿舍17栋",
@@ -125,322 +288,359 @@ export default {
             content: "学生宿舍17栋",
             visible: true,
           },
-        })
-        map.add(dormitory11.value);
-        map.add(dormitory12.value);
-        map.add(dormitory13.value);
-        map.add(dormitory14.value);
-        map.add(dormitory15.value);
-        map.add(dormitory16.value);
-        map.add(dormitory17.value);
+        });
 
+        library1.value  = new AMap.Marker({
+          position: [113.997128,22.601514],
+          title: "涵泳图书馆",
+          label: {
+            content: "涵泳图书馆",
+            visible: true,
+          },
+        });
+        library2.value  = new AMap.Marker({
+          position: [113.99839,22.595091],
+          title: "琳恩图书馆",
+          label: {
+            content: "琳恩图书馆",
+            visible: true,
+          },
+        });
+        library3.value  = new AMap.Marker({
+          position: [113.998277,22.597533],
+          title: "一丹图书馆",
+          label: {
+            content: "一丹图书馆",
+            visible: true,
+          },
+        });
+
+        cafeteria1.value = new AMap.Marker({
+          position: [113.997792,22.597677],
+          title: "中心食堂",
+          label: {
+            content: "中心食堂",
+            visible: true,
+          },
+        });
+        cafeteria2.value = new AMap.Marker({
+          position: [113.998586,22.601832],
+          title: "第二学生食堂",
+          label: {
+            content: "第二学生食堂",
+            visible: true,
+          },
+        });
+        cafeteria3.value = new AMap.Marker({
+          position: [113.997822,22.596719],
+          title: "湖畔食堂",
+          label: {
+            content: "湖畔食堂",
+            visible: true,
+          },
+        });
+        cafeteria4.value = new AMap.Marker({
+          position: [113.999648,22.604821],
+          title: "荔园餐厅",
+          label: {
+            content: "荔园餐厅",
+            visible: true,
+          },
+        });
+        cafeteria5.value = new AMap.Marker({
+          position: [114.002748,22.600055],
+          title: "西餐厅",
+          label: {
+            content: "西餐厅",
+            visible: true,
+          },
+        });
+        cafeteria6.value = new AMap.Marker({
+          position: [114.002185,22.599901],
+          title: "茶餐厅",
+          label: {
+            content: "茶餐厅",
+            visible: true,
+          },
+        });
+        teaching_building1.value = new AMap.Marker({
+          position: [113.997303,22.595971],
+          title: "第一教学楼",
+          label: {
+            content: "第一教学楼",
+            visible: true,
+          },
+
+        });
+        teaching_building2.value = new AMap.Marker({
+          position: [113.996903,22.594746],
+          title: "第二教学楼",
+          label: {
+            content: "第二教学楼",
+            visible: true,
+          },
+        });
+        teaching_building3.value = new AMap.Marker({
+          position: [113.999864,22.595915],
+          title: "第三教学楼",
+          label: {
+            content: "第三教学楼",
+            visible: true,
+          },
+
+        });
+
+        college1.value= new AMap.Marker({
+          position: [113.995374,22.601041],
+          title: "工学院北楼",
+          label: {
+            content: "工学院北楼",
+            visible: true,
+          },
+
+        });
+        college2.value= new AMap.Marker({
+          position: [113.995835,22.599659],
+          title: "工学院南楼",
+          label: {
+            content: "工学院南楼",
+            visible: true,
+          },
+
+        });
+        college3.value= new AMap.Marker({
+          position: [114.000637,22.595489],
+          title: "商学院",
+          label: {
+            content: "商学院",
+            visible: true,
+          },
+
+        });
+        college4.value= new AMap.Marker({
+          position: [113.999907,22.594315],
+          title: "理学院",
+          label: {
+            content: "理学院",
+            visible: true,
+          },
+
+        });
+        college5.value= new AMap.Marker({
+          position: [114.002015,22.597614],
+          title: "人文社科学院",
+          label: {
+            content: "人文社科学院",
+            visible: true,
+          },
+
+        });
+        jiu_hua.value =  new AMap.Marker({
+          position: [113.999853,22.600115],
+          title: "九华精舍",
+          label: {
+            content: "九华精舍",
+            visible: true,
+          },
+
+        });
+        office.value =  new AMap.Marker({
+          position: [114.001506,22.598426],
+          title: "办公楼",
+          label: {
+            content: "办公楼",
+            visible: true,
+          },
+
+        });
+        faculty_apartment1.value = new AMap.Marker({
+          position: [114.002182,22.600026],
+          title: "教师公寓1栋",
+          label: {
+            content: "教师公寓1栋",
+            visible: true,
+          },
+
+        });
+        faculty_apartment2.value = new AMap.Marker({
+          position: [114.002707,22.600259],
+          title: "教师公寓2栋",
+          label: {
+            content: "教师公寓2栋",
+            visible: true,
+          },
+
+        });
+        faculty_apartment3.value = new AMap.Marker({
+          position: [114.002283,22.599585],
+          title: "教师公寓3栋",
+          label: {
+            content: "教师公寓3栋",
+            visible: true,
+          },
+
+        });
+        faculty_apartment4.value = new AMap.Marker({
+          position: [114.002857,22.599867],
+          title: "教师公寓4栋",
+          label: {
+            content: "教师公寓4栋",
+            visible: true,
+          },
+
+        });
+        faculty_apartment5.value = new AMap.Marker({
+          position: [114.002396,22.599149],
+          title: "教师公寓5栋",
+          label: {
+            content: "教师公寓5栋",
+            visible: true,
+          },
+
+        });
+        faculty_apartment6.value = new AMap.Marker({
+          position: [114.003034,22.599313],
+          title: "教师公寓6栋",
+          label: {
+            content: "教师公寓6栋",
+            visible: true,
+          },
+
+        });
+        gym1.value =  new AMap.Marker({
+          position: [113.999666,22.598976],
+          title: "风雨操场",
+          label: {
+            content: "风雨操场",
+            visible: true,
+          },
+
+        });
+        gym2.value =  new AMap.Marker({
+          position: [114.003236,22.601756],
+          title: "松禾体育场",
+          label: {
+            content: "松禾体育场",
+            visible: true,
+          },
+
+        });
+        gym3.value =  new AMap.Marker({
+          position: [114.004261,22.601895],
+          title: "松禾体育馆",
+          label: {
+            content: "松禾体育馆",
+            visible: true,
+          },
+
+        });
+        //创建自定义标签
+        // var customLabel = document.createElement('div');
+        // customLabel.className = 'custom-label';
+        // customLabel.textContent = '第一教学楼';
+// // 自定义 CSS 样式
+//         var customStyle = document.createElement('style');
+//         customStyle.type = 'text/css';
+//         customStyle.innerHTML = '.custom-label {' +
+//             'background-color: #fff;' +
+//             'border: 2px solid #000;' +
+//             'padding: 5px;' +
+//             'font-size: 14px;' +
+//             'border-radius: 5px;' + // 设置边框圆角
+//             '}';
+//
+//         document.getElementsByTagName('head')[0].appendChild(customStyle);
+//
+// // 创建并设置 Marker
+//         teaching_building1.value = new AMap.Marker({
+//           position: [113.997303,22.595971],
+//           title: "第一教学楼",
+//           icon: {
+//             size: new AMap.Size(30, 30), // 设置图标大小
+//             image: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png' // 设置图标图片
+//           }
+//         });
+//         teaching_building1.value.setLabel({
+//           offset: new AMap.Pixel(0, -30), // 设置 Label 偏移量
+//           content: customLabel // 自定义 Label 元素
+//         });
+
+
+        markers.push(library1.value);
+        markers.push(library2.value);
+        markers.push(library3.value);
+
+        markers.push(dormitory1.value);
+        markers.push(dormitory2.value);
+        markers.push(dormitory3.value);
+        markers.push(dormitory4.value);
+        markers.push(dormitory5.value);
+        markers.push(dormitory6.value);
+        markers.push(dormitory7.value);
+        markers.push(dormitory8.value);
+        markers.push(dormitory9.value);
+        markers.push(dormitory10.value);
+        markers.push(dormitory11.value);
+        markers.push(dormitory12.value);
+        markers.push(dormitory13.value);
+        markers.push(dormitory14.value);
+        markers.push(dormitory15.value);
+        markers.push(dormitory16.value);
+        markers.push(dormitory17.value);
+        markers.push(cafeteria1.value);
+        markers.push(cafeteria2.value);
+        markers.push(cafeteria3.value);
+        markers.push(cafeteria4.value);
+        markers.push(cafeteria5.value);
+        markers.push(cafeteria6.value);
+        markers.push(teaching_building1.value)
+        markers.push(teaching_building2.value)
+        markers.push(teaching_building3.value)
+        markers.push(college1.value)
+        markers.push(college2.value)
+        markers.push(college3.value)
+        markers.push(college4.value)
+        markers.push(college5.value)
+        markers.push(jiu_hua.value)
+        markers.push(office.value)
+        markers.push(faculty_apartment1.value)
+        markers.push(faculty_apartment2.value)
+        markers.push(faculty_apartment3.value)
+        markers.push(faculty_apartment4.value)
+        markers.push(faculty_apartment5.value)
+        markers.push(faculty_apartment6.value)
+        markers.push(gym1.value)
+        markers.push(gym2.value)
+        markers.push(gym3.value);
         //这里需要添加到地图上显示
-        dormitory11.value.on('click', function () {
-          handleDormitoryClick();
-        });
-        dormitory12.value.on('click', function () {
-          handleDormitoryClick();
-        });
-        dormitory13.value.on('click', function () {
-          handleDormitoryClick();
-        });
-        dormitory14.value.on('click', function () {
-          handleDormitoryClick();
-        });
-        dormitory15.value.on('click', function () {
-          handleDormitoryClick();
-        });
-        dormitory16.value.on('click', function () {
-          handleDormitoryClick();
-        });
+        for (let i = 0; i < markers.length; i++) {
+          map.add(markers[i]);
+          markers[i].on('click', function (e){
+            handleDormitoryClick(e);
+          })
+        }
+
       });
     });
-    const handleDormitoryClick = () => {
-      popoverVisible.value = true;
-      axios
-      .get('http://localhost:8080/building', {
-        params: {
-          buildingName: 'dormitory11',
-          userName: 'example-username', //替换成具体的用户名或者从组件的props中获取
-        }
-      })
-      .then((res) => {
-        console.log(res.data);
-      })
-      .catch((err) => console.log(err));
-    };
+
 
     return {
       popoverVisible,
-
+      popoverTop,
+      popoverLeft,
+      title,
+      introduction,
+      username,
+      authority,
+      handleDormitoryClick,
     };
   },
+  methods:{
+    setUsername(username) {
+      this.username = username;
+    },
+}
 
-  data() {
-
-    return {
-      username: "",
-      authority:"",
-
-    }
-  },
-  // created() {
-  //   this.initMap()
-  // },
-  //
-  // methods:{
-  //   initMap() {
-  //     window._AMapSecurityConfig = {
-  //       securityJsCode: '9cd0ae12178c767342bff17cbf6ed653',
-  //     }
-  //     AMapLoader.load({
-  //       key:"c7a4dd8b9777a66796d5b71cf0839982", // 申请好的Web端开发者Key，首次调用 load 时必填
-  //       version:"2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
-  //       // plugins:[''], // 需要使用的的插件列表，如比例尺'AMap.Scale'等
-  //     }).then((AMap)=>{
-  //       const map = new AMap.Map("container",{  //设置地图容器id
-  //         viewMode:"3D",    //是否为3D地图模式
-  //         zoom:17,           //初始化地图级别
-  //         center:[114.002365,22.599631], //初始化地图中心点位置
-  //         showLabel:false,   //不显示地图文字标记
-  //       });
-  //
-  //       const dormitory11  = new AMap.Marker({
-  //         position: [113.999061,22.602202],
-  //         title: "学生宿舍11栋",
-  //         label: {
-  //           content: "学生宿舍11栋",
-  //           visible: true,
-  //         },
-  //       });
-  //       const dormitory12  = new AMap.Marker({
-  //         position: [113.999839,22.602628],
-  //         title: "学生宿舍12栋",
-  //         label: {
-  //           content: "学生宿舍12栋",
-  //           visible: true,
-  //         },
-  //       });
-  //       const dormitory13  = new AMap.Marker({
-  //         position: [113.999528,22.601652],
-  //         title: "学生宿舍13栋",
-  //         label: {
-  //           content: "学生宿舍13栋",
-  //           visible: true,
-  //         },
-  //       });
-  //       const dormitory14  = new AMap.Marker({
-  //         position: [114.000025,22.601855],
-  //         title: "学生宿舍14栋",
-  //         label: {
-  //           content: "学生宿舍14栋",
-  //           visible: true,
-  //         },
-  //       })
-  //       const dormitory15  = new AMap.Marker({
-  //         position: [114.000439,22.602231],
-  //         title: "学生宿舍15栋",
-  //         label: {
-  //           content: "学生宿舍15栋",
-  //           visible: true,
-  //         },
-  //       })
-  //       const dormitory16  = new AMap.Marker({
-  //         position: [114.00098,22.602543],
-  //         title: "学生宿舍16栋",
-  //         label: {
-  //           content: "学生宿舍16栋",
-  //           visible: true,
-  //         },
-  //       })
-  //       const dormitory17  = new AMap.Marker({
-  //         position: [114.000921,22.602979],
-  //         title: "学生宿舍17栋",
-  //         label: {
-  //           content: "学生宿舍17栋",
-  //           visible: true,
-  //         },
-  //       })
-  //
-  //       // dormitory11.on('click', function() {
-  //       //   console.log(this.popoverVisible);
-  //       //   this.popoverVisible = true;
-  //       //
-  //       //   axios.get("http://localhost:8080/building",{
-  //       //     params:{
-  //       //       buildingName:"dormitory11",
-  //       //       userName:this.username,
-  //       //     }
-  //       //   }).then(res => {
-  //       //     console.log(res.data);
-  //       //   }).catch((err) => console.log(err));
-  //       //
-  //       //
-  //       //   // 这里编写显示信息窗体的代码，使用res.data作为参数
-  //       //   // 例如，可以使用Vue组件来渲染信息窗体
-  //       //   // 例如：
-  //       //   // new Vue({
-  //       //   //   data: {
-  //       //   //     buildingInfo: data
-  //       //   //   },
-  //       //   //   template: `
-  //       //   //     <div>
-  //       //   //       <h3>{{ buildingInfo.name }}</h3>
-  //       //   //       <p>{{ buildingInfo.description }}</p>
-  //       //   //     </div>
-  //       //   //   `
-  //       //   // }).$mount('#infoWindow');
-  //       //
-  //       //
-  //       //
-  //       // });
-  //       dormitory12.on('click', function() {
-  //         var params = new URLSearchParams();
-  //         params.append('username', this.username);
-  //         params.append('command', 'dfghjd');
-  //         axios.post('http://localhost:8080/user/addUser1', params)
-  //         .then(res => {
-  //           console.log(res.data);
-  //         }).catch((err) => console.log(err));
-  //       });
-  //
-  //
-  //
-  //       map.add(dormitory11);
-  //       map.add(dormitory12);
-  //       map.add(dormitory13);
-  //       map.add(dormitory14);
-  //       map.add(dormitory15);
-  //       map.add(dormitory16);
-  //       map.add(dormitory17);
-  //
-  //       map.on('movestart', () =>{
-  //         var zoom = map.getZoom(); // 获取当前地图的缩放级别
-  //         var allOverlays = map.getAllOverlays();
-  //         allOverlays.forEach(function(overlay){
-  //           if(overlay instanceof AMap.Marker){ // 判断该覆盖物是否为Marker
-  //             if(zoom < 16.9) {
-  //               overlay.hide();
-  //             } else {
-  //               overlay.show();
-  //             }
-  //
-  //           }
-  //         });
-  //       });
-  //       // 添加插件
-  //       AMap.plugin(["AMap.ToolBar", "AMap.Scale", "AMap.HawkEye","AMap.Geolocation","AMap.MapType","AMap.MouseTool"], function () {
-  //         //异步同时加载多个插件
-  //         // 添加地图插件
-  //         map.addControl(new AMap.ToolBar()); // 工具条控件;范围选择控件
-  //         map.addControl(new AMap.Scale()); // 显示当前地图中心的比例尺
-  //         map.addControl(new AMap.HawkEye()); // 显示缩略图
-  //         map.addControl(new AMap.Geolocation()); // 定位当前位置
-  //         map.addControl(new AMap.MapType()); // 实现默认图层与卫星图,实时交通图层之间切换
-  //
-  //
-  //         // 以下是鼠标工具插件
-  //         // const mouseTool = new AMap.MouseTool(map);
-  //         // mouseTool.rule();// 用户手动绘制折线图,测量距离
-  //         // mouseTool.measureArea(); // 测量面积
-  //       });
-  //       // 单击
-  //       // const infoWindow = new AMap.InfoWindow({
-  //       //   offset: new AMap.Pixel(0, -30), // 设置信息窗体的偏移量，使其显示在点击位置的上方
-  //       // });
-  //
-  //       // map.on('click', (e) => {
-  //       //   // 调用POI搜索的方法
-  //       //   AMap.plugin('AMap.PlaceSearch', function() {
-  //       //     const placeSearch = new AMap.PlaceSearch();
-  //       //
-  //       //     // 根据点击位置的经纬度坐标进行POI搜索
-  //       //
-  //       //     //placeSearch.setFilter({keyword: '南园小筑', excludeKeywords:''})
-  //       //     placeSearch.searchNearBy('', e.lnglat, 100, function(status, result) {
-  //       //       if (status === 'complete' && result.info === 'OK') {
-  //       //         // 获取第一个搜索结果的地点名称
-  //       //         const address = result.poiList.pois[0].name;
-  //       //
-  //       //         // 设置信息窗体的内容
-  //       //         infoWindow.setContent(address);
-  //       //
-  //       //         // 在点击位置打开信息窗体
-  //       //         infoWindow.open(map, e.lnglat);
-  //       //       }
-  //       //     });
-  //       //   });
-  //       // });
-  //
-  //       // map.on('click',(e) => {
-  //       //   // lng ==> 经度值  lat => 维度值
-  //       //   current_position.value = [e.lnglat.lng,e.lnglat.lat];
-  //       //   AMap.plugin('AMap.Geocoder', function() {
-  //       //       const geocoder = new AMap.Geocoder();
-  //       //       geocoder.radius = 10
-  //       //     geocoder.getAddress([e.lnglat.lng, e.lnglat.lat], function(status, result) {
-  //       //       if (status === 'complete' && result.info === 'OK') {
-  //       //         // 获取地点名称
-  //       //         const address = result.regeocode.formattedAddress;
-  //       //         console.log(address);
-  //       //       }
-  //       //     });
-  //       //   });
-  //       //   path.value.push([e.lnglat.lng,e.lnglat.lat]);
-  //       //   // addMarker();
-  //       //   // addPolyLine();
-  //       // })
-  //
-  //
-  //       // 实例化点标记
-  //       // 第一种(封成函数来触发)
-  //       // function addMarker() {
-  //       //   const marker = new AMap.Marker({
-  //       //     icon: "//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png",
-  //       //     position: current_position.value, // 这里我们通过上面的点击获取经纬度坐标,实时添加标记
-  //       //     // 通过设置 offset 来添加偏移量
-  //       //     offset: new AMap.Pixel(-26, -54),
-  //       //   });
-  //       //   marker.setMap(map);
-  //       // }
-  //       // // 第二种 直接写死 position 的经纬度值
-  //       // /*const marker = new AMap.Marker({
-  //       //     icon: "//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png",
-  //       //     position: [113.808299,34.791787],
-  //       //     // 通过设置 offset 来添加偏移量
-  //       //     offset: new AMap.Pixel(-26, -54),
-  //       // });
-  //       // marker.setMap(map);*/
-  //       //
-  //       //
-  //       // // 折线
-  //       // function addPolyLine() {
-  //       //   const polyline = new AMap.Polyline({
-  //       //     path: path.value,
-  //       //     isOutline: true,
-  //       //     outlineColor: "#ffeeff",
-  //       //     borderWeight: 1,
-  //       //     strokeColor: "#3366FF",
-  //       //     strokeOpacity: 0.6,
-  //       //     strokeWeight: 5,
-  //       //     // 折线样式还支持 'dashed'
-  //       //     strokeStyle: "solid",
-  //       //     // strokeStyle是dashed时有效
-  //       //     // strokeDasharray: [10, 5],
-  //       //     lineJoin: "round",
-  //       //     lineCap: "round",
-  //       //     zIndex: 50,
-  //       //   });
-  //       //   map.add([polyline]);
-  //       // }
-  //
-  //
-  //
-  //     }).catch(e=>{
-  //       console.log(e);
-  //     })
-  //   }
-  // }
 }
 
 
@@ -463,7 +663,7 @@ export default {
 #container{
   padding:0px;
   margin: 0px;
-  width: 100%;
-  height: 800px;
+  width: 100vw; /* 100% 屏幕宽度 */
+  height: 100vh; /* 100% 屏幕高度 */
 }
 </style>
