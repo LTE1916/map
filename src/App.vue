@@ -2,19 +2,15 @@
 
 <template>
   <div>
-    <LogIn @login-success="handleLoginSuccess" v-if="showLogin" />
-    <SustechMap v-if="!showLogin" />
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import SustechMap from './components/SustechMap.vue'
-import LogIn from './components/LogIn.vue'
 
 export default {
   components: {
-    LogIn,
-    SustechMap
+
   },
   data() {
     return {

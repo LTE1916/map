@@ -1,43 +1,25 @@
 <template>
-  <div class="login-container">
+  <div class="register-container">
 
     <h1>Welcome to Sustech Campus!!!</h1>
 
-    <div class="login-form">
-      <div v-if="role === 'guest'">
-        <h2>Guest Mode</h2>
-        <p>You are browsing as a guest. No registration or login required.</p>
-        <button @click="enterGuestMode">Enter</button>
-      </div>
-
-      <el-form v-if="role ==='user'||role === 'admin' " ref="userForm" :model="user" :rules="rules">
-        <h2>{{ role === 'user' ? 'User' : 'admin' }} Dashboard</h2>
-        <div v-if="!loggedIn">
+    <div class="register-form">
+      <el-form ref="userForm" :model="user" :rules="rules">
+        <h2>User register Dashboard</h2>
+        <div>
           <el-form-item label="Username" prop="username">
-            <el-input v-model="user.username" :placeholder="role === 'user' ? 'Enter your username' : 'Enter your admin name'"></el-input>
+            <el-input v-model="user.username"
+                      :placeholder="role === 'user' ? 'Enter your username' : 'Enter your admin name'"></el-input>
           </el-form-item>
-
           <el-form-item label="Password" prop="password">
             <el-input type="password" v-model="user.password" placeholder="Enter your password"></el-input>
           </el-form-item>
-
           <el-form-item>
-            <el-button type="primary" @click="login">Login</el-button>
-            <el-button v-if="role === 'user'" @click="register">Register</el-button>
+            <el-button v-if="role === 'user'" @click="registerUser">Register</el-button>
           </el-form-item>
         </div>
-        <p v-else>Welcome, {{ role === 'user' ? user.username : `Admin ${user.username}` }}!</p>
-        <el-button v-if="loggedIn" @click="logout">Logout</el-button>
       </el-form>
 
-      <div>
-        <label>Select Role:</label>
-        <select v-model="role">
-          <option value="guest">Guest</option>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
     </div>
 
   </div>
@@ -47,7 +29,7 @@
 <script>
 
 export default {
-  name: 'LogIn',
+  name: 'UserRegister',
   data() {
     return {
       user: {},
@@ -62,49 +44,32 @@ export default {
         ],
       },
       role: "user",
-      loggedIn: false
     };
   },
   methods: {
-    enterGuestMode() {
-      // Implement guest mode logic
-      this.$emit('login-success');
-      this.$router.push("/map")
-    },
-    login() {
-      // Implement login logic based on the selected role
-      if (this.role === 'user' || this.role ==='admin') {
+    registerUser() {
+      // Implement register logic based on the selected role
+      if (this.role === 'user' || this.role === 'admin') {
         this.$refs['userForm'].validate((valid) => {
           console.log(valid)
           this.user.authority = this.role.toUpperCase();
           if (valid) {  // 表单校验合法
-            this.$request.post("/user/login", this.user).then(res => {
+            this.$request.post("/user/register", this.user).then(res => {
               if (res.code === '200') {
-                this.loggedIn = true;
-                localStorage.setItem("user", JSON.stringify(res.data))  // 存储用户信息到浏览器
-                this.$router.push("/map")
-                this.$message.success("login success")
+                this.$router.push("/login")
+                this.$message.success("register success")
               } else {
                 this.$message.error(res.msg)
               }
-            }).catch((err)=>{
+            }).catch((err) => {
               console.log(err)
             })
           } else {
             console.log("is not valid")
           }
         });
-      }else {
+      } else {
         console.log(this.role)
-      }
-    },
-    register() {
-      // Implement registration logic based on the selected role
-      this.loggedIn = true
-      if (this.role === 'user') {
-        // Implement user registration logic using this.username and this.password
-      } else if (this.role === 'admin') {
-        // Implement admin registration logic using this.adminName and this.adminPassword
       }
     },
     logout() {
@@ -118,7 +83,7 @@ export default {
 </script>
 
 <style scoped>
-.login-container {
+.register-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -128,7 +93,7 @@ export default {
   font-family: 'Arial', sans-serif;
 }
 
-.login-form {
+.register-form {
   max-width: 400px;
   width: 100%;
   padding: 30px;
