@@ -1,12 +1,14 @@
 <template>
   <div>
-    <div class="custom-menu-container">
-      <el-menu mode="horizontal" text-color="#fff" active-text-color="#ffd04b">
-        <el-button type="text" class="custom-button" @click="navigateTo('1')">论坛</el-button>
-        <el-button type="text" class="custom-button" @click="navigateTo('2')">点餐</el-button>
 
+      <el-menu class = "custom-menu-container" mode="horizontal" text-color="#fff" active-text-color="#ffd04b" background-color="#808080">
+        <el-button type="text" class="custom-button" @click="navigateTo('0')">主页</el-button>
+        <el-button type="text" class="custom-button" @click="navigateTo('1')">论坛</el-button>
+        <el-button type="text" class="custom-button" @click="navigateTo('2')">教室预定</el-button>
+        <el-button type="text" class="custom-button" @click="navigateTo('3')">文创购物</el-button>
+        <el-button type="text" class="custom-button" @click="navigateTo('4')">公交站点</el-button>
       </el-menu>
-    </div>
+
     <div class="app-container">
       <div style="background-color: #ffffff;">
         <div id="container"></div>
@@ -71,9 +73,14 @@ export default {
     ElUpload,
     ElButton,
     ElPopover,
+
   },
   setup(){
 
+    const markers = [];
+    const busStationMarkers = [];
+    const showBuildingMarkFlag = ref(true);
+    const showBusStationMarkFlag = ref(false);
     const popoverVisible = ref(false);
     const title = ref('');
     const introduction = ref('');
@@ -137,9 +144,46 @@ export default {
     const reviewText = ref('');
     const selectedFile = ref(null);
 
-    // const navigateTo = (index) => {
-    //   // Add logic to handle navigation based on index
-    // };
+    const activeSidebar = ref(false);
+
+    const xing_yuan = ref(null)
+    const hui_yuan = ref(null)
+    const chuang_yuan = ref(null)
+    const li_yuan = ref(null)
+    const student_dormitry = ref(null)
+    const community_health_center = ref(null)
+    const faculty_cafeteria = ref(null)
+    const guest_house = ref(null)
+    const gate3 = ref(null)
+    const gate2 = ref(null)
+    const gate1 = ref(null)
+    const administration_building = ref(null)
+    const gate7 = ref(null)
+    const research_building = ref(null)
+    const COE = ref(null)
+    const navigateTo = (index) => {
+
+      switch (index) {
+        case '0':
+          showMainPage();
+          break;
+        case '1':
+          // window.location.href = 'http://
+          break;
+        case '2':
+          // window.location.href = 'http://
+          break;
+        case '3':
+          //  window.location.href = 'http://
+          break;
+        case '4':
+
+          showBusStationMarkers();
+          break;
+      }
+
+      // Add logic to handle navigation based on index
+    };
     const openReviewForm = () => {
       reviewFormVisible.value = true;
     };
@@ -158,6 +202,29 @@ export default {
       reviewFormVisible.value = false;
     };
 
+    const showMainPage = () => {
+      showBuildingMarkFlag.value = true;
+      showBusStationMarkFlag.value = false;
+      for (let i = 0; i < markers.length; i++) {
+        markers[i].show();
+      }
+      for (let i = 0; i < busStationMarkers.length; i++) {
+        busStationMarkers[i].hide();
+      }
+
+    }
+
+    const showBusStationMarkers = () => {
+      showBusStationMarkFlag.value = true;
+      showBuildingMarkFlag.value = false;
+      for (let i = 0; i < markers.length; i++) {
+        markers[i].hide();
+      }
+      for (let i = 0; i < busStationMarkers.length; i++) {
+        busStationMarkers[i].show();
+      }
+
+    }
 
 
     const handleDormitoryClick = ($event) => {
@@ -320,8 +387,10 @@ export default {
               };
           //fff2b2b4
           buildingLayer.setStyle(options); //此配色优先级高于自定义mapStyle
+          const buildingOverlay = new AMap.OverlayGroup();
+          const BusStationOverlay = new AMap.OverlayGroup();
 
-          console.log(mask)
+
           const map = new AMap.Map('container', {
             mask: mask,
             viewMode: '3D',
@@ -351,52 +420,31 @@ export default {
         */
 
 
-
-
-          // AMap.plugin('AMap.DistrictSearch', function () {
-          //   const districtSearch = new AMap.DistrictSearch({
-          //     // 关键字对应的行政区级别
-          //     subdistrict: 0,
-          //     extensions: 'all',
-          //     level: 'province'
-          //   });
-          //   // 搜索所有省/直辖市信息
-          //   console.log('search')
-          //   districtSearch.search('广东省', function(status, result) {
-          //     console.log('start search')
-          //     const bounds = result.districtList[0]['boundaries'];
-          //     const mask = [];
-          //     for (let i = 0; i < bounds.length; i++) {
-          //       mask.push([bounds[i]]);
-          //     }
-          //     console.log(mask)
-          //     //map.setmask(mask);
-          //     // 查询成功时，result即为对应的行政区信息
-          //   })
-          // })
-
-
-//         // 定义多变形的经纬度坐标
-//         const polygonArr = [
-//           [116.457, 39.964],
-//           [116.436, 39.865],
-//           [116.727, 39.894]
-//           // 更多经纬度坐标
-//         ];
-//
-// // 创建一个多边形对象
-//         const polygon = new AMap.Polygon({
-//           path: polygonArr,  // 设置多边形轮廓路径
-//           fillColor: '#00B2EE', // 填充颜色
-//           fillOpacity: 0.5, // 填充透明度
-//           strokeColor: '#0091ea', // 线条颜色
-//           strokeWeight: 3 // 线条宽度
-//         });
-
 // 将多边形添加到地图上
           // 获取多边形的范围
 
-          AMap.plugin(
+
+          // const startLngLat = [114.002467,22.607841]
+          // const endLngLat = [113.995249,22.600512]
+          map.plugin(["AMap.Driving"], function() { //加载驾车服务插件
+            const driving = new AMap.Driving({
+              map: map,
+              panel: 'panel'
+
+            });
+            driving.search([114.002467,22.607841], [113.995249,22.600512], function(status, result) {
+              if (status === 'complete') {
+                console.log(result)
+                // 路线规划成功
+              } else {
+                console.log(result)
+                // 路线规划失败
+              }
+              // result即是对应的驾车路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+            });
+        });
+
+            AMap.plugin(
               ["AMap.ToolBar", "AMap.Scale", "AMap.HawkEye", "AMap.Geolocation", "AMap.MapType",
                 "AMap.MouseTool"], function () {
                 //异步同时加载多个插件
@@ -409,19 +457,40 @@ export default {
               });
           map.on('movestart', () => {
             const zoom = map.getZoom(); // 获取当前地图的缩放级别
-            const allOverlays = map.getAllOverlays();
-            allOverlays.forEach(function (overlay) {
-              if (overlay instanceof AMap.Marker) { // 判断该覆盖物是否为Marker
-                if (zoom < 16.9) {
-                  overlay.hide();
-                } else {
-                  overlay.show();
-                }
+            if (zoom < 16.9) {
+              buildingOverlay.hide();
+              BusStationOverlay.hide();
+            } else {
+              if(showBuildingMarkFlag.value) {
+                buildingOverlay.show();
               }
-            });
-          });
+              if(showBusStationMarkFlag.value) {
+                BusStationOverlay.show();
+              }
+            }
+          })
+          map.on('zoomend', () => {
+            const zoom = map.getZoom(); // 获取当前地图的缩放级别
+            if (zoom < 16.9) {
+              buildingOverlay.hide();
+              BusStationOverlay.hide();
+            } else {
+              if(showBuildingMarkFlag.value) {
+                buildingOverlay.show();
+                BusStationOverlay.hide();
+              }
+              if(showBusStationMarkFlag.value) {
+                buildingOverlay.hide();
+                BusStationOverlay.show();
+              }
+            }
+          }
+          );
 
-          const markers = [];
+
+
+
+
           dormitory1.value = new AMap.Marker({
             position: [113.998653, 22.599186], title: '学生宿舍1栋', label: {content: '学生宿舍1栋'},});
           dormitory2.value = new AMap.Marker({
@@ -526,6 +595,54 @@ export default {
             position: [114.003236, 22.601756], title: "松禾体育场", label: {content: "松禾体育场"},});
           gym3.value = new AMap.Marker({
             position: [114.004261, 22.601895], title: "松禾体育馆", label: {content: "松禾体育馆"},});
+
+
+          xing_yuan.value = new AMap.Marker({
+            position: [114.002467,22.607841], title: "欣园", label: {content: "欣园"},});
+          hui_yuan.value = new AMap.Marker({
+            position: [114.003309,22.603185], title: "慧园", label: {content: "慧园"},});
+          chuang_yuan.value = new AMap.Marker({
+            position: [114.002011,22.603299], title: "创园", label: {content: "创园"},});
+          li_yuan.value = new AMap.Marker({
+            position: [114.000209,22.603582], title: "荔园", label: {content: "荔园"},});
+          student_dormitry.value = new AMap.Marker({
+            position: [113.998814,22.601809], title: "学生宿舍", label: {content: "学生宿舍"},});
+          community_health_center.value = new AMap.Marker({
+            position: [114.000751,22.60007], title: "社康中心", label: {content: "社康中心"},});
+          faculty_cafeteria.value = new AMap.Marker({
+            position: [114.002902,22.600432], title: "教工餐厅", label: {content: "教工餐厅"},});
+          guest_house.value = new AMap.Marker({
+            position: [114.003562,22.598857], title: "专家公寓", label: {content: "专家公寓"},});
+          gate3.value = new AMap.Marker({
+            position: [114.004061,22.597594], title: "3号门", label: {content: "3号门"},});
+          gate2.value = new AMap.Marker({
+            position: [114.001078,22.595102], title: "2号门", label: {content: "2号门"},});
+          gate1.value = new AMap.Marker({
+            position: [114.001078,22.595102], title: "1号门", label: {content: "1号门"},});
+          administration_building.value = new AMap.Marker({
+            position: [114.001078,22.595102], title: "行政楼", label: {content: "行政楼"},});
+          gate7.value = new AMap.Marker({
+            position: [113.995269,22.594563], title: "7号门", label: {content: "7号门"},});
+          research_building.value = new AMap.Marker({
+            position: [113.996637,22.596826], title: "科研楼", label: {content: "科研楼"},});
+          COE.value = new AMap.Marker({
+            position: [113.995249,22.600512], title: "工学院", label: {content: "工学院"},});
+
+
+
+
+          busStationMarkers.push(xing_yuan.value, hui_yuan.value, chuang_yuan.value, li_yuan.value, student_dormitry.value, community_health_center.value, faculty_cafeteria.value, guest_house.value, gate3.value, gate2.value, gate1.value, administration_building.value, gate7.value, research_building.value, COE.value);
+          for (let i = 0; i < busStationMarkers.length; i++) {
+
+            busStationMarkers[i].setIcon('https://vdata.amap.com/icons/b18/1/2.png')
+            busStationMarkers[i].setMap(map);
+            busStationMarkers[i].hide();
+            BusStationOverlay.addOverlay(busStationMarkers[i]);
+            busStationMarkers[i].on('click', function (e) {
+              handleDormitoryClick(e);
+            })
+          }
+
           //创建自定义标签
           // var customLabel = document.createElement('div');
           // customLabel.className = 'custom-label';
@@ -557,70 +674,23 @@ export default {
 //           content: customLabel // 自定义 Label 元素
 //         });
 
-          markers.push(library1.value);
-          markers.push(library2.value);
-          markers.push(library3.value);
-          markers.push(dormitory1.value);
-          markers.push(dormitory2.value);
-          markers.push(dormitory3.value);
-          markers.push(dormitory4.value);
-          markers.push(dormitory5.value);
-          markers.push(dormitory6.value);
-          markers.push(dormitory7.value);
-          markers.push(dormitory8.value);
-          markers.push(dormitory9.value);
-          markers.push(dormitory10.value);
-          markers.push(dormitory11.value);
-          markers.push(dormitory12.value);
-          markers.push(dormitory13.value);
-          markers.push(dormitory14.value);
-          markers.push(dormitory15.value);
-          markers.push(dormitory16.value);
-          markers.push(dormitory17.value);
-          markers.push(cafeteria1.value);
-          markers.push(cafeteria2.value);
-          markers.push(cafeteria3.value);
-          markers.push(cafeteria4.value);
-          markers.push(cafeteria5.value);
-          markers.push(cafeteria6.value);
-          markers.push(teaching_building1.value)
-          markers.push(teaching_building2.value)
-          markers.push(teaching_building3.value)
-          markers.push(research_building1.value)
-          markers.push(research_building2.value)
-          markers.push(research_building3.value)
-          markers.push(college1.value)
-          markers.push(college2.value)
-          markers.push(college3.value)
-          markers.push(college4.value)
-          markers.push(college5.value)
-          markers.push(college6.value)
-          markers.push(college7.value)
-          markers.push(college8.value)
-          markers.push(jiu_hua.value)
-          markers.push(office.value)
-          markers.push(faculty_apartment1.value)
-          markers.push(faculty_apartment1.value)
-          markers.push(faculty_apartment2.value)
-          markers.push(faculty_apartment3.value)
-          markers.push(faculty_apartment4.value)
-          markers.push(faculty_apartment5.value)
-          markers.push(faculty_apartment6.value)
-          markers.push(gym1.value)
-          markers.push(gym2.value)
-          markers.push(gym3.value);
-          //这里需要添加到地图上显示
+          markers.push(library1.value,library2.value,library3.value,dormitory1.value,dormitory2.value,dormitory3.value,dormitory4.value,dormitory5.value,dormitory6.value,dormitory7.value,dormitory8.value,dormitory9.value,dormitory10.value,dormitory11.value,dormitory12.value,dormitory13.value,dormitory14.value,dormitory15.value,dormitory16.value,dormitory17.value,cafeteria1.value,cafeteria2.value,cafeteria3.value,cafeteria4.value,cafeteria5.value,cafeteria6.value,teaching_building1.value,teaching_building2.value,teaching_building3.value,research_building1.value,research_building2.value,research_building3.value,college1.value,college2.value,college3.value,college4.value,college5.value,college6.value,college7.value,college8.value,jiu_hua.value,office.value,faculty_apartment1.value,faculty_apartment2.value,faculty_apartment3.value,faculty_apartment4.value,faculty_apartment5.value,faculty_apartment6.value,gym1.value,gym2.value,gym3.value);
           for (let i = 0; i < markers.length; i++) {
-            map.add(markers[i]);
+            buildingOverlay.addOverlay(markers[i]);
             markers[i].on('click', function (e) {
               handleDormitoryClick(e);
             })
           }
+          map.add(buildingOverlay);
+          map.add(BusStationOverlay);
         });
       });
 
 
     return {
+      markers,
+      busStationMarkers,
+      showBuildingMarkFlag,
       popoverVisible,
       popoverTop,
       popoverLeft,
@@ -634,6 +704,8 @@ export default {
       openReviewForm,
       handleFileUpload,
       submitReview,
+      activeSidebar,
+      navigateTo,
 
     };
   },
@@ -676,6 +748,7 @@ export default {
   align-items: center; /* 垂直居中 */
 }
 .custom-button {
+  background-color: #808080; /* 设置按钮的背景色 */
   font-size: 20px;
   color: white;
   margin-left: 20px; /* 设置左边边距 */

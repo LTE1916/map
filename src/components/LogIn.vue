@@ -100,12 +100,8 @@ export default {
     },
     register() {
       // Implement registration logic based on the selected role
-      this.loggedIn = true
-      if (this.role === 'user') {
-        // Implement user registration logic using this.username and this.password
-      } else if (this.role === 'admin') {
-        // Implement admin registration logic using this.adminName and this.adminPassword
-      }
+      this.$router.push("/register")
+
     },
     logout() {
       // Implement logout logic

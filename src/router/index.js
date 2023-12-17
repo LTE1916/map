@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import {createRouter, createWebHistory} from 'vue-router';
 
 // 路由组件的引入方式保持不变
 const routes = [
@@ -6,6 +6,11 @@ const routes = [
         path: '/login',
         name: 'login',
         component: () => import(/* webpackChunkName: "login" */ '../components/LogIn.vue'),
+    },
+    {
+        path: '/',
+        name: 'home',
+        redirect: '/login',
     },
     {
         path: '/map',
@@ -17,6 +22,17 @@ const routes = [
         name: 'register',
         component: () => import(/* webpackChunkName: "map" */ '../components/UserRegister.vue'),
     },
+    {
+        path: '/side',
+        name: 'side',
+        component: () => import('../components/SideBar.vue'),
+        props: true,
+    },
+    {
+        path: '/product',
+        name: 'product',
+        component: () => import(/* webpackChunkName: "order" */ '../components/CulturalProduct.vue'),
+    }
     // ...其他路由
 ];
 
