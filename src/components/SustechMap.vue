@@ -79,6 +79,8 @@ export default {
 
     const markers = [];
     const busStationMarkers = [];
+    const bus_line1 = ref(null);
+    const bus_line2 = ref(null);
     const showBuildingMarkFlag = ref(true);
     const showBusStationMarkFlag = ref(false);
     const popoverVisible = ref(false);
@@ -177,7 +179,6 @@ export default {
           //  window.location.href = 'http://
           break;
         case '4':
-
           showBusStationMarkers();
           break;
       }
@@ -211,7 +212,8 @@ export default {
       for (let i = 0; i < busStationMarkers.length; i++) {
         busStationMarkers[i].hide();
       }
-
+      bus_line1.value.hide();
+      bus_line2.value.hide();
     }
 
     const showBusStationMarkers = () => {
@@ -223,7 +225,8 @@ export default {
       for (let i = 0; i < busStationMarkers.length; i++) {
         busStationMarkers[i].show();
       }
-
+      bus_line1.value.show();
+      bus_line2.value.show();
     }
 
 
@@ -253,7 +256,9 @@ export default {
       .catch((err) => console.log(err));
     };
     onMounted(() => {
-
+      window._AMapSecurityConfig = {
+        securityJsCode: '9cd0ae12178c767342bff17cbf6ed653',
+      }
         AMapLoader.load({key: 'c7a4dd8b9777a66796d5b71cf0839982', version: '2.0'}).then((AMap) => {
           const mask = [[
             [113.994771,22.602154], [113.995249,22.599787], [113.996525,22.598672],
@@ -389,7 +394,22 @@ export default {
           buildingLayer.setStyle(options); //此配色优先级高于自定义mapStyle
           const buildingOverlay = new AMap.OverlayGroup();
           const BusStationOverlay = new AMap.OverlayGroup();
+          bus_line1.value = new AMap.Polyline({
+            strokeOpacity:1,
+            strokeWeight: 7,  // 线宽
+            borderWeight: 1,  // 线宽
+            strokeColor: "#f29f05",  // 线颜色
 
+            lineJoin: 'round'  // 折线拐点连接处样式
+          });
+          bus_line2.value = new AMap.Polyline({
+            strokeOpacity:1,
+            strokeWeight: 7,  // 线宽
+            borderWeight: 1,  // 线宽
+            strokeColor: "#228B22",  // 线颜色
+
+            lineJoin: 'round'  // 折线拐点连接处样式
+          });
 
           const map = new AMap.Map('container', {
             mask: mask,
@@ -428,13 +448,27 @@ export default {
           // const endLngLat = [113.995249,22.600512]
           map.plugin(["AMap.Driving"], function() { //加载驾车服务插件
             const driving = new AMap.Driving({
-              map: map,
-              panel: 'panel'
 
+              hideMarkers:true,
             });
-            driving.search([114.002467,22.607841], [113.995249,22.600512], function(status, result) {
+
+             const waypoints1 = [[114.002011,22.603299],[114.000209,22.603582],[114.000751,22.60007],[114.002902,22.600432],
+              [114.003562,22.598857], [114.004061,22.597594]];
+            const waypoints2 = [[114.002011,22.603299],[114.000209,22.603582],[113.996806,22.599211]];
+            driving.search([114.002467,22.607841], [113.995249,22.600512], {waypoints: waypoints1},function(status, result) {
               if (status === 'complete') {
                 console.log(result)
+                const steps = result.routes[0].steps;
+                let path = [];
+                for (let i = 0; i < steps.length; i++) {
+                  path = path.concat(steps[i].path);
+                }
+                for (let i = 0; i < path.length; i++) {
+                  path[i] = [path[i].lng- 0.00001, path[i].lat -0.00001];
+                }
+                bus_line1.value.setPath(path)
+                bus_line1.value.setMap(map);
+                bus_line1.value.hide();
                 // 路线规划成功
               } else {
                 console.log(result)
@@ -442,7 +476,31 @@ export default {
               }
               // result即是对应的驾车路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
             });
+            driving.search([114.002467,22.607841], [113.996637,22.596826], {waypoints: waypoints2},function(status, result) {
+              if (status === 'complete') {
+                console.log(result)
+                const steps = result.routes[0].steps;
+                let path = [];
+                for (let i = 0; i < steps.length; i++) {
+                  path = path.concat(steps[i].path);
+                }
+                for (let i = 0; i < path.length; i++) {
+                  path[i] = [path[i].lng+ 0.00001, path[i].lat +0.00001];
+                }
+                bus_line2.value.setPath(path);
+                bus_line2.value.setMap(map);
+                bus_line2.value.hide();
+                // 路线规划成功
+              } else {
+                console.log(result)
+                // 路线规划失败
+              }
+              // result即是对应的驾车路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+            });
+
         });
+
+
 
             AMap.plugin(
               ["AMap.ToolBar", "AMap.Scale", "AMap.HawkEye", "AMap.Geolocation", "AMap.MapType",
@@ -460,12 +518,18 @@ export default {
             if (zoom < 16.9) {
               buildingOverlay.hide();
               BusStationOverlay.hide();
+              bus_line1.value.hide();
+              bus_line2.value.hide();
             } else {
               if(showBuildingMarkFlag.value) {
                 buildingOverlay.show();
+                bus_line1.value.hide();
+                bus_line2.value.hide();
               }
               if(showBusStationMarkFlag.value) {
                 BusStationOverlay.show();
+                bus_line1.value.show();
+                bus_line2.value.show();
               }
             }
           })
@@ -474,14 +538,20 @@ export default {
             if (zoom < 16.9) {
               buildingOverlay.hide();
               BusStationOverlay.hide();
+              bus_line1.value.hide();
+              bus_line2.value.hide();
             } else {
-              if(showBuildingMarkFlag.value) {
+              if(showBuildingMarkFlag.value) {//此时点击了回到主页
                 buildingOverlay.show();
                 BusStationOverlay.hide();
+                 bus_line1.value.hide();
+                bus_line2.value.hide();
               }
               if(showBusStationMarkFlag.value) {
                 buildingOverlay.hide();
                 BusStationOverlay.show();
+                  bus_line1.value.show();
+                bus_line2.value.show();
               }
             }
           }
@@ -706,7 +776,7 @@ export default {
       submitReview,
       activeSidebar,
       navigateTo,
-
+      showBusStationMarkers,
     };
   },
 
