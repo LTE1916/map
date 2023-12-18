@@ -1,40 +1,45 @@
 <template>
   <div class="sidebar">
     <el-scrollbar ref="scrollbarRef" height="100%">
-
-      <div class="">
-        <img src="../resources/3647.jpg_wh300.jpg" alt="建筑图片">
-
-        <div class="content">
-          <div class="sidebar-header">
-            <h1>{{ name }}</h1>
-            <el-rate
-                v-model="rating"
-                disabled
-                show-score
-                text-color="#ff9900"
-                score-template="{value} points"
-            />
-            <span class="rating-reviews">({{ reviews }} reviews)</span>
-          </div>
+      <div class="title" v-show="activeIndex ===1">
+        <img src="../assets/1.jpg" alt="建筑图片">
+        <div class="sidebar-header">
+          <h1>{{ name }}</h1>
+          <el-rate
+              v-model="rating"
+              disabled
+              show-score
+              text-color="#ff9900"
+              score-template="{value} points"
+          />
+          <span class="rating-reviews">({{ reviews }} reviews)</span>
         </div>
         <el-divider></el-divider>
       </div>
 
-      <div :class="{ 'content-top': contentIsTop }">
+      <div :class="{ 'comment-top': commentIsTop }">
+
         <el-menu
             default-active="1"
             class="el-menu-demo"
             mode="horizontal"
-            @click="selectItem(item)"
         >
-          <el-menu-item index="1">
+          <el-menu-item index="1" @click="handleClick1">
             概览
           </el-menu-item>
-          <el-menu-item index="2">
+          <el-menu-item index="2" @click="handleClick2">
             评论
           </el-menu-item>
         </el-menu>
+      </div>
+
+      <div class="content">
+        <div class="summary" v-show="activeIndex===1">
+          <div>this is summary.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
+        </div>
+        <div class="comment" v-show="activeIndex===2">
+          <div>this is comment.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
+        </div>
 
         <div ref="innerRef">
           <p v-for="item in 20" :key="item" class="scrollbar-demo-item">
@@ -42,8 +47,6 @@
           </p>
         </div>
       </div>
-
-
     </el-scrollbar>
 
   </div>
@@ -72,7 +75,8 @@ export default {
       text: "",
       photo: "",
       name: "building A",
-      contentIsTop: false,
+      commentIsTop: false,
+      activeIndex: 1,
     };
   },
   mounted() {
@@ -84,9 +88,7 @@ export default {
     });
   },
   methods: {
-    selectItem(item) {
-      this.contentIsTop = item.name === '评论'; // 当点击评论时，contentIsTop变为true
-    },
+
     fetchData() {
       this.$request.get('/building/search', {
         params: {
@@ -109,6 +111,13 @@ export default {
           .catch((error) => {
             console.log(error);
           });
+    },
+    handleClick1() {
+      this.activeIndex = 1
+    },
+    handleClick2() {
+      this.activeIndex = 2
+      this.commentIsTop = true
     }
   }
 
@@ -117,11 +126,10 @@ export default {
 
 <style>
 .sidebar {
+  display: block;
+  flex-direction: column; /* 如果希望子元素垂直排列 */
   width: 400px;
-//color: #42b983; display: block; background-color: #ffffff; position: fixed; top: 0; left: 0;
-  height: 100%;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  display: flex;
+//color: #42b983; display: block; background-color: #ffffff; position: fixed; top: 0; left: 0; height: 100%; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); display: flex;
   /* 样式细节 */
 }
 
@@ -131,21 +139,27 @@ img {
   /* 其他样式 */
 }
 
-.content {
+.sidebar-header {
   padding: 20px;
 }
 
 .el-menu-demo {
-  display: flex;
   justify-content: space-around; /* 这会使所有菜单项均匀分布 */
+  width: 100%;
+//min-width: 400px;
 }
 
-.router {
-  padding: 20px;
-}
-
-.content-top {
+.commentIsTop {
   order: -1; /* 负序号会置顶内容 */
+}
+
+.content {
+  width: 400px;
+  display: block;
+  word-wrap: break-word;
+  white-space: normal;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 /* 其他CSS样式 */
