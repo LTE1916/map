@@ -81,8 +81,9 @@ export default {
             this.$request.post("/user/login", this.user).then(res => {
               if (res.code === '200') {
                 this.loggedIn = true;
+                console.log(res.data)
                 localStorage.setItem("user", JSON.stringify(res.data))  // 存储用户信息到浏览器
-                this.$router.push("/map")
+                this.$router.push("/side")
                 this.$message.success("login success")
               } else {
                 this.$message.error(res.msg)
