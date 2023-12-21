@@ -1,4 +1,5 @@
 <template>
+  <transition name="slide">
   <div class="sidebar" v-show="this.sideBarVisible">
     <el-scrollbar ref="scrollbarRef" height="100%">
       <div class="title" v-show="activeIndex ===1">
@@ -48,43 +49,6 @@
           <div style="display: flex; justify-content: center; align-items: center;">
             <el-button :icon="Edit" color="#626aef" round @click="this.dialogVisible = true">我要评价</el-button>
           </div>
-          <el-dialog
-              v-model="this.dialogVisible"
-              :title="name"
-              width="30%"
-              draggable
-          >
-            <div class="user-profile">
-              <div class="avatar-wrapper">
-                <img :src="this.user.avatarUrl" alt="头像" class="avatar"/>
-              </div>
-              <div class="username">
-                {{ this.user.username }}
-              </div>
-            </div>
-
-            <el-rate v-model="this.reviewContent.rating" size="large" allow-half style="padding: 20px"></el-rate>
-
-            <!-- 输入评论的文本框 -->
-            <el-input
-                type="textarea"
-                placeholder="详细说明您在这个地点的亲身体验"
-                v-model="this.reviewContent.comment"
-            ></el-input>
-
-            <template #footer>
-            <span class="dialog-footer">
-              <el-button @click="dialogVisible = false">Cancel</el-button>
-              <el-button type="primary" @click="handleCommentButton">
-                Confirm
-              </el-button>
-            </span>
-            </template>
-          </el-dialog>
-          <!--          评论-->
-
-
-          <!--          <el-button @click="this.commentVisible = true">comment show</el-button>-->
 
           <div v-for="item in comments" :key="item.id" style="border-bottom: 1px solid #ccc; padding: 10px 0; ">
             <div style="display: flex">
@@ -142,47 +106,7 @@
               </div>
             </div>
           </div>
-          <el-dialog
-              v-model="this.replydialogVisible"
-              width="30%"
-              draggable
-          >
-            <template #header="{ titleId, titleClass }">
-              <div class="my-header">
-                <h4 :id="titleId" :class="titleClass">回复</h4>
-                <el-avatar :src="this.currentReply.pavatar"></el-avatar>
-                <span>{{ this.currentReply.pname }}</span>
-              </div>
-            </template>
 
-
-            <!--            <div class="user-profile">-->
-            <!--              <div class="avatar-wrapper">-->
-            <!--                <img :src="this.user.avatarUrl" alt="头像" class="avatar"/>-->
-            <!--              </div>-->
-            <!--              <div class="username">-->
-            <!--                {{ this.user.username }}-->
-            <!--              </div>-->
-            <!--            </div>-->
-
-            <!--            <el-rate v-model="this.reviewContent.rating" size="large" allow-half style="padding: 20px"></el-rate>-->
-
-            <!-- 输入评论的文本框 -->
-            <el-input
-                type="textarea"
-                placeholder="详细说明您在这个地点的亲身体验"
-                v-model="this.reviewContent.comment"
-            ></el-input>
-
-            <template #footer>
-            <span class="dialog-footer">
-              <el-button @click="dialogVisible = false">Cancel</el-button>
-              <el-button type="primary" @click="handleCommentButton">
-                Confirm
-              </el-button>
-            </span>
-            </template>
-          </el-dialog>
 
         </div>
 
@@ -195,11 +119,91 @@
     </el-scrollbar>
 
   </div>
-  <div class="sidebar-toggle-button" @click="toggleSidebar">
-    <el-button :icon="Edit" round>展开/折叠侧边栏</el-button>
+  </transition>
+
+
+  <div class="sidebar-toggle-button" @click="toggleSidebar" :style="this.buttonStyle" >
+    <el-button :icon="this.sideBarVisible? ArrowLeft:ArrowRight" round ></el-button>
   </div>
 
+  <el-dialog
+      v-model="this.dialogVisible"
+      :title="name"
+      width="30%"
+      draggable
+  >
+    <div class="user-profile">
+      <div class="avatar-wrapper">
+        <img :src="this.user.avatarUrl" alt="头像" class="avatar"/>
+      </div>
+      <div class="username">
+        {{ this.user.username }}
+      </div>
+    </div>
 
+    <el-rate v-model="this.reviewContent.rating" size="large" allow-half style="padding: 20px"></el-rate>
+
+    <!-- 输入评论的文本框 -->
+    <el-input
+        type="textarea"
+        placeholder="详细说明您在这个地点的亲身体验"
+        v-model="this.reviewContent.comment"
+    ></el-input>
+
+    <template #footer>
+            <span class="dialog-footer">
+              <el-button @click="dialogVisible = false">Cancel</el-button>
+              <el-button type="primary" @click="handleCommentButton">
+                Confirm
+              </el-button>
+            </span>
+    </template>
+  </el-dialog>
+
+  <el-dialog
+      v-model="this.replydialogVisible"
+      width="30%"
+      draggable
+  >
+    <template #header="{ titleId, titleClass }">
+      <div class="my-header">
+        <h4 :id="titleId" :class="titleClass">回复</h4>
+        <el-avatar :src="this.currentReply.pavatar"></el-avatar>
+        <span>{{ this.currentReply.pname }}</span>
+      </div>
+    </template>
+
+
+    <!--            <div class="user-profile">-->
+    <!--              <div class="avatar-wrapper">-->
+    <!--                <img :src="this.user.avatarUrl" alt="头像" class="avatar"/>-->
+    <!--              </div>-->
+    <!--              <div class="username">-->
+    <!--                {{ this.user.username }}-->
+    <!--              </div>-->
+    <!--            </div>-->
+
+    <!--            <el-rate v-model="this.reviewContent.rating" size="large" allow-half style="padding: 20px"></el-rate>-->
+
+    <!-- 输入评论的文本框 -->
+    <el-input
+        type="textarea"
+        placeholder="详细说明您在这个地点的亲身体验"
+        v-model="this.reviewContent.comment"
+    ></el-input>
+
+    <template #footer>
+            <span class="dialog-footer">
+              <el-button @click="dialogVisible = false">Cancel</el-button>
+              <el-button type="primary" @click="handleCommentButton">
+                Confirm
+              </el-button>
+            </span>
+    </template>
+
+
+
+  </el-dialog>
 
 </template>
 
@@ -211,10 +215,19 @@ import customParseFormat from 'dayjs/plugin/customParseFormat'; // 导入解析�
 dayjs.extend(customParseFormat);
 dayjs.locale('zh-cn');
 import {ElScrollbar} from 'element-plus';
-import {Edit} from "@element-plus/icons-vue";
+import {ArrowLeft, ArrowRight, ArrowUp, Edit} from "@element-plus/icons-vue";
 
 export default {
   computed: {
+    ArrowRight() {
+      return ArrowRight
+    },
+    ArrowLeft() {
+      return ArrowLeft
+    },
+    ArrowUp() {
+      return ArrowUp
+    },
     Edit() {
       return Edit
     }
@@ -242,7 +255,12 @@ export default {
       building: {},
       replydialogVisible: false,
       currentReply: {},
-      sideBarVisible:true
+      sideBarVisible:true,
+      buttonStyle:"  position: absolute;\n" +
+          "  top: 50%; /* 垂直居中 */\n" +
+          "  left: 400px; /* 根据按钮宽度调整，确保按钮紧贴侧边栏 */\n" +
+          "  transform: translateY(-50%); /* 使用transform来精确居中 */\n" +
+          "  transition: right 0.3s; /* 过渡效果 */"
     };
   },
   mounted() {
@@ -335,13 +353,28 @@ export default {
           this.$message.error(res.msg)
         }
       })
+      this.loadRating()
     },
     formattedDate(originalDate) {
       return dayjs(originalDate).format('YYYY年MM月DD日 HH:mm:ss');
     },
+
     toggleSidebar() {
       this.sideBarVisible = !this.sideBarVisible;
       // 根据侧边栏的可见性调整按钮的位置
+      if (this.sideBarVisible === true){
+        this.buttonStyle = "  position: absolute;\n" +
+            "  top: 50%; /* 垂直居中 */\n" +
+            "  left: 400px; /* 根据按钮宽度调整，确保按钮紧贴侧边栏 */\n" +
+            "  transform: translateY(-50%); /* 使用transform来精确居中 */\n" +
+            "  transition: right 0.3s; /* 过渡效果 */"
+      }else{
+        this.buttonStyle ="  position: absolute;\n" +
+            "  top: 50%; /* 垂直居中 */\n" +
+            "  left: 0px; /* 根据按钮宽度调整，确保按钮紧贴侧边栏 */\n" +
+            "  transform: translateY(-50%); /* 使用transform来精确居中 */\n" +
+            "  transition: right 0.3s; /* 过渡效果 */"
+      }
 
     }
   }
@@ -418,12 +451,11 @@ img {
   font-size: 16px; /* 根据需要设置合适的字体大小 */
   /* 根据需要添加其他样式 */
 }
-.sidebar-toggle-button {
-  position: absolute;
-  top: 50%; /* 垂直居中 */
-  left: 400px; /* 根据按钮宽度调整，确保按钮紧贴侧边栏 */
-  transform: translateY(-50%); /* 使用transform来精确居中 */
-  transition: right 0.3s; /* 过渡效果 */
+.slide-enter-active, .slide-leave-active {
+  transition: transform 0.3s ease-in-out;
+}
+.slide-enter, .slide-leave-to /* .slide-leave-active 在 Vue 2.1.8+ 版本中 */ {
+  transform: translateX(-100%); /* 侧边栏宽度的相反方向移动 */
 }
 
 /* 其他CSS样式 */
