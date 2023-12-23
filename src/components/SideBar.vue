@@ -3,7 +3,7 @@
   <div class="sidebar" v-show="this.sideBarVisible">
     <el-scrollbar ref="scrollbarRef" height="100%">
       <div class="title" v-show="activeIndex ===1">
-        <img src="../assets/1.jpg" alt="建筑图片">
+        <img :src="this.avatarUrl" alt="建筑图片">
         <div class="sidebar-header">
           <h1>{{ name }}</h1>
           <el-rate
@@ -174,17 +174,6 @@
     </template>
 
 
-    <!--            <div class="user-profile">-->
-    <!--              <div class="avatar-wrapper">-->
-    <!--                <img :src="this.user.avatarUrl" alt="头像" class="avatar"/>-->
-    <!--              </div>-->
-    <!--              <div class="username">-->
-    <!--                {{ this.user.username }}-->
-    <!--              </div>-->
-    <!--            </div>-->
-
-    <!--            <el-rate v-model="this.reviewContent.rating" size="large" allow-half style="padding: 20px"></el-rate>-->
-
     <!-- 输入评论的文本框 -->
     <el-input
         type="textarea"
@@ -260,7 +249,8 @@ export default {
           "  top: 50%; /* 垂直居中 */\n" +
           "  left: 400px; /* 根据按钮宽度调整，确保按钮紧贴侧边栏 */\n" +
           "  transform: translateY(-50%); /* 使用transform来精确居中 */\n" +
-          "  transition: right 0.3s; /* 过渡效果 */"
+          "  transition: right 0.3s; /* 过渡效果 */",
+      avatarUrl : "localhost:8080/files/fa1e99a24de742b7bbb3420481781076.png"
     };
   },
   mounted() {
@@ -387,8 +377,7 @@ export default {
   display: block;
   flex-direction: column; /* 如果希望子元素垂直排列 */
   width: 400px;
-  position: relative;
-//color: #42b983; display: block; background-color: #ffffff; position: fixed; top: 0; left: 0; height: 100%; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); display: flex;
+ position: fixed; top: 0; left: 0; height: 100%; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   /* 样式细节 */
 }
 
@@ -405,7 +394,6 @@ img {
 .el-menu-demo {
   justify-content: space-around; /* 这会使所有菜单项均匀分布 */
   width: 100%;
-//min-width: 400px;
 }
 
 .commentIsTop {
