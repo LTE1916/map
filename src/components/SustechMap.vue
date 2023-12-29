@@ -1,13 +1,6 @@
 <template>
-  <div>
 
-      <el-menu class = "custom-menu-container" mode="horizontal" text-color="#fff" active-text-color="#ffd04b" background-color="#808080">
-        <el-button type="text" class="custom-button" @click="navigateTo('0')">主页</el-button>
-        <el-button type="text" class="custom-button" @click="navigateTo('1')">论坛</el-button>
-        <el-button type="text" class="custom-button" @click="navigateTo('2')">教室预定</el-button>
-        <el-button type="text" class="custom-button" @click="navigateTo('3')">文创购物</el-button>
-        <el-button type="text" class="custom-button" @click="navigateTo('4')">公交站点</el-button>
-      </el-menu>
+  <div class="custom-div" >
 
     <div class="app-container">
       <div style="background-color: #ffffff;">
@@ -54,36 +47,67 @@
           </el-button>
         </div>
     </el-popover>
+    <div>
+      <sidebar  ref="sidebarRef"></sidebar> <!-- 在map.vue中使用sidebar组件 -->
+    </div>
   </div>
-
+  <el-menu class = "custom-menu-container" mode="horizontal" text-color="#ffffff" active-text-color="#ffd04b"
+           background-color="transparent ">
+    <el-button :icon="House"  class="custom-button" @click="navigateTo('0')">主页</el-button>
+    <el-button :icon="ChatLineSquare" class="custom-button" @click="navigateTo('1')">论坛</el-button>
+    <el-button :icon="Timer" class="custom-button" @click="navigateTo('2')">教室预定</el-button>
+    <el-button :icon="ShoppingCart" class="custom-button" @click="navigateTo('3')"> 文创购物 </el-button>
+    <el-button :icon="Van" class="custom-button" @click="navigateTo('4')"> 公交站点 </el-button>
+    <el-button :icon="Search" class="custom-button" @click="navigateTo('5')"> 导航 </el-button>
+    <el-button :icon="ArrowLeft" round >test button</el-button>
+  </el-menu>
 
 </template>
 
 <script>
 
 import AMapLoader from '@amap/amap-jsapi-loader';
-import axios from "axios";
 
-import {ElButton, ElPopover, ElUpload} from 'element-plus';
+import Sidebar from './SideBar.vue'; // 导入sidebar.vue组件
+import {ElButton, ElPopover, ElUpload } from 'element-plus';
 import 'element-plus/dist/index.css'
 
-import {onMounted, ref} from "vue";
+import {getCurrentInstance, onMounted, ref} from "vue";
+import {House,ChatLineSquare,Timer,ShoppingCart,Search,ArrowLeft,Van} from "@element-plus/icons-vue";
 export default {
   components: {
+    Sidebar,
     ElUpload,
     ElButton,
     ElPopover,
 
   },
   setup(){
-
+    const map = ref(null);
+    const amap = ref(null)
     const markers = [];
     const busStationMarkers = [];
+    const line1Markers = [];//公交线路，内部存marker
+    const line2Markers = [];
+    const line3Markers = [];
+    const line4Markers = [];
+    let nearStartRecords = [];//起点附近3个站点的信息
+    let nearEndRecords = [];//终点附近3个站点的信息
     const bus_line1 = ref(null);
     const bus_line2 = ref(null);
+    const walking_line = ref(null); //步行导航
     const showBuildingMarkFlag = ref(true);
     const showBusStationMarkFlag = ref(false);
+    const shownavigationFlag = ref(false);
+    const busStationOverlay = ref(null);
+    const buildingOverlay = ref(null);
+    const navigationOverlay = ref(null);
     const popoverVisible = ref(false);
+    const navigationFlag = ref(false);
+    const chooseStartFlag = ref(true);
+    const start = ref('');
+    const end = ref('');
+
     const title = ref('');
     const introduction = ref('');
     const username = ref("");
@@ -145,7 +169,8 @@ export default {
     const reviewFormVisible = ref(false);
     const reviewText = ref('');
     const selectedFile = ref(null);
-
+    const startIcon = ref(null);
+    const endIcon = ref(null);
     const activeSidebar = ref(false);
 
     const xing_yuan = ref(null)
@@ -162,7 +187,10 @@ export default {
     const administration_building = ref(null)
     const gate7 = ref(null)
     const research_building = ref(null)
-    const COE = ref(null)
+    const COEN = ref(null)
+    const COES = ref(null)
+    const SideBarRef = ref(null);
+    const { proxy } = getCurrentInstance();
     const navigateTo = (index) => {
 
       switch (index) {
@@ -181,6 +209,8 @@ export default {
         case '4':
           showBusStationMarkers();
           break;
+        case '5':
+          handleNavigation();
       }
 
       // Add logic to handle navigation based on index
@@ -206,6 +236,7 @@ export default {
     const showMainPage = () => {
       showBuildingMarkFlag.value = true;
       showBusStationMarkFlag.value = false;
+      shownavigationFlag.value = false;
       for (let i = 0; i < markers.length; i++) {
         markers[i].show();
       }
@@ -214,6 +245,8 @@ export default {
       }
       bus_line1.value.hide();
       bus_line2.value.hide();
+      navigationOverlay.value.hide()
+      SideBarRef.value.resetSideBar()
     }
 
     const showBusStationMarkers = () => {
@@ -229,37 +262,241 @@ export default {
       bus_line2.value.show();
     }
 
+    const handleNavigation = () => {
+      navigationFlag.value = true;
+      SideBarRef.value.handleNavigate();
+      // Implement the logic to navigate to the desired location
+    }
+    const confirmNavigation = (navigationMethod) => {
+      navigationOverlay.value.clearOverlays();
+      console.log(`Start: ${start.value}, End: ${end.value}`);
+      if (start.value === '' && end.value === '') {
+        alert("请选择起点和终点");
+      }else if(start.value === end.value){
+        alert("起点和终点不能相同");
+      }else if (start.value === '') {
+        alert("请选择起点");
+      }else if (end.value === '') {
+        alert("请选择终点");
+      }else {
+        const mapValue = map.value;
+
+        // 执行导航逻辑
+        mapValue.plugin(["AMap.Walking"], function() {
+          const walking = new amap.value.Walking({
+          });
+          if (navigationMethod === 'walk'){
+            walking.search(start.value, end.value,function(status, result) {
+              if (status === 'complete') {
+                const steps = result.routes[0].steps;
+                let path = [];
+                let instructions = [];
+                for (let i = 0; i < steps.length; i++) {
+                  path = path.concat(steps[i].path);
+                  instructions.push(steps[i].instruction)
+                }
+                SideBarRef.value.setSteps(instructions);
+                walking_line.value = new amap.value.Polyline({
+                  strokeOpacity:1,
+                  strokeWeight: 6,  // 线宽
+                  borderWeight: 1,  // 线宽
+                  strokeColor: "#63e398",  // 线颜色
+
+                  lineJoin: 'round'  // 折线拐点连接处样式
+                });
+                walking_line.value.setPath(path)
+                walking_line.value.setMap(mapValue);
+                navigationOverlay.value.addOverlay(walking_line.value)
+                // 路线规划成功
+                chooseStartFlag.value = true;
+                navigationFlag.value = false;
+              }
+            });
+          }
+
+          else if (navigationMethod === 'bus'){
+            // buildingOverlay.value.hide();
+            // busStationOverlay.value.show();
+            console.log('bus')
+            const walking = new amap.value.Walking();
+
+
+            const bus_route_mid = new amap.value.Polyline({
+              strokeOpacity:1,
+              strokeWeight: 6,
+              borderWeight: 1,
+              strokeColor: "#7e99f4",
+
+              lineJoin: 'round'
+            });
+
+            const nearestStartStation = nearestStations(busStationMarkers, start.value,3);
+            //nearestStartStation是marker数组
+            const nearestEndStation = nearestStations(busStationMarkers, end.value,3);
+            for (let i = 0; i < nearestStartStation.length; i++) {
+
+              walking.search(start.value, nearestStartStation[i].getPosition(),function(status, result) {
+                const instructions = [];
+                if (status === 'complete') {
+                  let tmpPath = [];
+                  const steps = result.routes[0].steps;
+                  for (let i = 0; i < steps.length; i++) {
+                    tmpPath = tmpPath.concat(steps[i].path);
+                    if(i === steps.length - 1){
+                      instructions.push(steps[i].instruction.slice(0,-5))
+                    }else {
+                      instructions.push(steps[i].instruction)
+                    }
+
+                  }
+                  addStartNearStation(nearestStartStation[i], result.routes[0].distance , tmpPath, instructions,nearestStartStation.length)
+                }
+              });
+            }
+
+            //todo 后端获取公交
+
+            for (let i = 0; i < nearestStartStation.length; i++) {
+              walking.search(nearestEndStation[i].getPosition(), end.value,function(status, result) {
+                const instructions = [];
+                if (status === 'complete') {
+                  let tmpPath = [];
+                  const steps = result.routes[0].steps;
+                  for (let i = 0; i < steps.length; i++) {
+                    tmpPath = tmpPath.concat(steps[i].path);
+                    instructions.push(steps[i].instruction)
+                  }
+
+                  addEndNearStation(nearestEndStation[i],result.routes[0].distance ,tmpPath, instructions,nearestEndStation.length)
+                }
+              });
+            }
+
+
+            navigationOverlay.value.addOverlay(bus_route_mid)
+
+            }
+
+          const startMarker = new amap.value.Marker({position:start.value,icon:startIcon.value})
+          const endMarker = new amap.value.Marker({position:end.value,icon:endIcon.value})
+          startMarker.setMap(map.value)
+          endMarker.setMap(map.value)
+          navigationOverlay.value.addOverlay(startMarker)
+          navigationOverlay.value.addOverlay(endMarker)
+          shownavigationFlag.value = true
+        })
+    }
+    };
+
+    const addStartNearStation = (nearestStartStation,distance, tmpPath, instructions, num) => {
+      nearStartRecords.push({
+        station: nearestStartStation,
+        distance:distance,
+        path: tmpPath,
+        instructions: instructions
+      });
+      if (num === nearStartRecords.length) {
+        const minDistanceRecord = nearStartRecords.reduce((minRecord, record) => {
+          return (minRecord.distance < record.distance) ? minRecord : record;
+        });
+        // 比较传入的三个值
+        console.log(minDistanceRecord.station)
+        const bus_route_start = new amap.value.Polyline({
+          strokeOpacity:1,
+          strokeWeight: 6,
+          borderWeight: 1,
+          strokeColor: "#925eb0",
+
+          lineJoin: 'round'
+        });
+        bus_route_start.setPath(minDistanceRecord.path)
+        bus_route_start.setMap(map.value);
+        navigationOverlay.value.addOverlay(bus_route_start)
+        SideBarRef.value.addSteps(minDistanceRecord.instructions)
+        nearStartRecords=[];
+      }
+
+    }
+
+    const addEndNearStation = (nearestStartStation, distance, tmpPath, instructions, num) =>{
+      nearEndRecords.push({
+        station: nearestStartStation,
+        distance:distance,
+        path: tmpPath,
+        instructions: instructions
+      });
+      if (num === nearEndRecords.length) {
+        const minDistanceRecord = nearEndRecords.reduce((minRecord, record) => {
+          return (minRecord.distance < record.distance) ? minRecord : record;
+        });
+        const bus_route_end = new amap.value.Polyline({
+          strokeOpacity:1,
+          strokeWeight: 6,
+          borderWeight: 1,
+          strokeColor: "#925eb0",
+
+          lineJoin: 'round'
+        });
+        bus_route_end.setPath(minDistanceRecord.path)
+        bus_route_end.setMap(map.value);
+        navigationOverlay.value.addOverlay(bus_route_end)
+        SideBarRef.value.addSteps(minDistanceRecord.instructions)
+        nearEndRecords=[];
+      }
+
+    }
+
+    const nearestStations = (line, position, numOfNearestStations) => {
+      //返回最近的N个车站
+      line.sort((a, b) => {
+        const distanceA = amap.value.GeometryUtil.distance(position, a.getPosition());
+        const distanceB = amap.value.GeometryUtil.distance(position, b.getPosition());
+        return distanceA - distanceB;
+      });
+
+      return line.slice(0, numOfNearestStations);
+    };
+
 
     const handleDormitoryClick = ($event) => {
-      popoverVisible.value = true;
-
-
-      title.value = $event.target._originOpts.title;
-      //introduction.value = $event.target._originOpts.title;
-      const x = $event.pixel.x
-      const y = $event.pixel.y;
-      popoverTop.value = `${y}px`;
-      popoverLeft.value = `${x}px`;
-      console.log(username.value)
-
-      axios.get('http://8.138.110.138:8080/building/search', {
-        params: {
-          name:'Building1',
-          //buildingName: title.value ,
-          //userName: 'exampleName', //替换成具体的用户名或者从组件的props中获取
+      if (navigationFlag.value) {
+        if(chooseStartFlag.value){
+          start.value = $event.target._originOpts.position;
+          SideBarRef.value.setStart(start.value);
+          chooseStartFlag.value = false;
+        }else {
+          end.value = $event.target._originOpts.position;
+          SideBarRef.value.setEnd(end.value);
+          chooseStartFlag.value = true;
         }
-      })
-      .then((res) => {
-        introduction.value = res.data.data.text;
-        console.log(res.data);
-      })
-      .catch((err) => console.log(err));
+      }else {
+      popoverVisible.value = true;
+      title.value = $event.target._originOpts.title;
+      SideBarRef.value.setName(title.value);
+    }
+
     };
     onMounted(() => {
+
+      SideBarRef.value = proxy.$refs.sidebarRef;
       window._AMapSecurityConfig = {
         securityJsCode: '9cd0ae12178c767342bff17cbf6ed653',
       }
         AMapLoader.load({key: 'c7a4dd8b9777a66796d5b71cf0839982', version: '2.0'}).then((AMap) => {
+          amap.value = AMap;
+
+          startIcon.value = new AMap.Icon({
+            size: new AMap.Size(25, 34), //图标尺寸
+            image: "//a.amap.com/jsapi_demos/static/demo-center/icons/dir-marker.png", //Icon 的图像
+            imageOffset: new AMap.Pixel(-9, -3), //图像相对展示区域的偏移量，适于雪碧图等
+            imageSize: new AMap.Size(135, 40), //根据所设置的大小拉伸或压缩图片
+          });
+          endIcon.value = new AMap.Icon({
+            size: new AMap.Size(25, 34), //图标尺寸
+            image: "//a.amap.com/jsapi_demos/static/demo-center/icons/dir-marker.png", //Icon 的图像
+            imageOffset: new AMap.Pixel(-95, -3),
+            imageSize: new AMap.Size(135, 40),
+          });
           const mask = [[
             [113.994771,22.602154], [113.995249,22.599787], [113.996525,22.598672],
             [113.996802,22.598004], [113.996937,22.598158], [113.996851,22.597628],
@@ -272,8 +509,7 @@ export default {
             [113.995949,22.604342],
         ]]//掩盖区域
           const buildingLayer = new AMap.Buildings({zooms:[16.75,20]});
-          var options =
-              {
+          var options = {
                 hideWithoutStyle:true,//是否隐藏设定区域外的楼块
                 areas:[
                     { //宿舍11-17
@@ -392,11 +628,12 @@ export default {
               };
           //fff2b2b4
           buildingLayer.setStyle(options); //此配色优先级高于自定义mapStyle
-          const buildingOverlay = new AMap.OverlayGroup();
-          const BusStationOverlay = new AMap.OverlayGroup();
+          buildingOverlay.value = new AMap.OverlayGroup();
+          busStationOverlay.value = new AMap.OverlayGroup();
+          navigationOverlay.value = new AMap.OverlayGroup();
           bus_line1.value = new AMap.Polyline({
             strokeOpacity:1,
-            strokeWeight: 7,  // 线宽
+            strokeWeight: 10,  // 线宽
             borderWeight: 1,  // 线宽
             strokeColor: "#f29f05",  // 线颜色
 
@@ -404,14 +641,14 @@ export default {
           });
           bus_line2.value = new AMap.Polyline({
             strokeOpacity:1,
-            strokeWeight: 7,  // 线宽
+            strokeWeight: 10,  // 线宽
             borderWeight: 1,  // 线宽
             strokeColor: "#228B22",  // 线颜色
 
             lineJoin: 'round'  // 折线拐点连接处样式
           });
 
-          const map = new AMap.Map('container', {
+          map.value = new AMap.Map('container', {
             mask: mask,
             viewMode: '3D',
             zoom: 17,
@@ -425,137 +662,90 @@ export default {
               buildingLayer,
             ]
           });
-          /*别删，留着debug用
-          for (let i = 0; i < options.areas.length; i++) {
-            new AMap.Polygon({
-              zooms:[16.75,20],
-              bubble:true,
-              fillColor:'green',
-              fillOpacity:0.2,
-              strokeWeight:1,
-              path:options.areas[i].path,
-              map:map
-            })
-          }
-        */
-
-
-// 将多边形添加到地图上
-          // 获取多边形的范围
-
-
-          // const startLngLat = [114.002467,22.607841]
-          // const endLngLat = [113.995249,22.600512]
-          map.plugin(["AMap.Driving"], function() { //加载驾车服务插件
-            const driving = new AMap.Driving({
-
-              hideMarkers:true,
-            });
-
-             const waypoints1 = [[114.002011,22.603299],[114.000209,22.603582],[114.000751,22.60007],[114.002902,22.600432],
-              [114.003562,22.598857], [114.004061,22.597594]];
-            const waypoints2 = [[114.002011,22.603299],[114.000209,22.603582],[113.996806,22.599211]];
-            driving.search([114.002467,22.607841], [113.995249,22.600512], {waypoints: waypoints1},function(status, result) {
-              if (status === 'complete') {
-                console.log(result)
-                const steps = result.routes[0].steps;
-                let path = [];
-                for (let i = 0; i < steps.length; i++) {
-                  path = path.concat(steps[i].path);
-                }
-                for (let i = 0; i < path.length; i++) {
-                  path[i] = [path[i].lng- 0.00001, path[i].lat -0.00001];
-                }
-                bus_line1.value.setPath(path)
-                bus_line1.value.setMap(map);
-                bus_line1.value.hide();
-                // 路线规划成功
-              } else {
-                console.log(result)
-                // 路线规划失败
-              }
-              // result即是对应的驾车路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
-            });
-            driving.search([114.002467,22.607841], [113.996637,22.596826], {waypoints: waypoints2},function(status, result) {
-              if (status === 'complete') {
-                console.log(result)
-                const steps = result.routes[0].steps;
-                let path = [];
-                for (let i = 0; i < steps.length; i++) {
-                  path = path.concat(steps[i].path);
-                }
-                for (let i = 0; i < path.length; i++) {
-                  path[i] = [path[i].lng+ 0.00001, path[i].lat +0.00001];
-                }
-                bus_line2.value.setPath(path);
-                bus_line2.value.setMap(map);
-                bus_line2.value.hide();
-                // 路线规划成功
-              } else {
-                console.log(result)
-                // 路线规划失败
-              }
-              // result即是对应的驾车路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
-            });
-
-        });
 
 
 
-            AMap.plugin(
-              ["AMap.ToolBar", "AMap.Scale", "AMap.HawkEye", "AMap.Geolocation", "AMap.MapType",
+
+
+
+
+
+            AMap.plugin(["AMap.ToolBar", "AMap.Scale", "AMap.HawkEye", "AMap.Geolocation", "AMap.MapType",
                 "AMap.MouseTool"], function () {
                 //异步同时加载多个插件
                 // 添加地图插件
-                map.addControl(new AMap.ToolBar()); // 工具条控件;范围选择控件
-                map.addControl(new AMap.Scale()); // 显示当前地图中心的比例尺
-                map.addControl(new AMap.HawkEye()); // 显示缩略图
-                map.addControl(new AMap.Geolocation()); // 定位当前位置
-                map.addControl(new AMap.MapType()); // 实现默认图层与卫星图,实时交通图层之间切换
+              map.value.addControl(new AMap.ToolBar()); // 工具条控件;范围选择控件
+              map.value.addControl(new AMap.Scale()); // 显示当前地图中心的比例尺
+              map.value.addControl(new AMap.HawkEye()); // 显示缩略图
+              map.value.addControl(new AMap.Geolocation()); // 定位当前位置
+              map.value.addControl(new AMap.MapType()); // 实现默认图层与卫星图,实时交通图层之间切换
               });
-          map.on('movestart', () => {
-            const zoom = map.getZoom(); // 获取当前地图的缩放级别
+          map.value.on('movestart', () => {
+            const zoom = map.value.getZoom(); // 获取当前地图的缩放级别
             if (zoom < 16.9) {
-              buildingOverlay.hide();
-              BusStationOverlay.hide();
+              buildingOverlay.value.hide();
+              busStationOverlay.value.hide();
               bus_line1.value.hide();
               bus_line2.value.hide();
+              navigationOverlay.value.hide();
             } else {
               if(showBuildingMarkFlag.value) {
-                buildingOverlay.show();
+                buildingOverlay.value.show();
                 bus_line1.value.hide();
                 bus_line2.value.hide();
               }
               if(showBusStationMarkFlag.value) {
-                BusStationOverlay.show();
+                busStationOverlay.value.show();
                 bus_line1.value.show();
                 bus_line2.value.show();
               }
+              if(shownavigationFlag.value){
+                navigationOverlay.value.show();
+              }
             }
-          })
-          map.on('zoomend', () => {
-            const zoom = map.getZoom(); // 获取当前地图的缩放级别
+          });
+          map.value.on('zoomend', () => {
+            const zoom = map.value.getZoom(); // 获取当前地图的缩放级别
             if (zoom < 16.9) {
-              buildingOverlay.hide();
-              BusStationOverlay.hide();
+              buildingOverlay.value.hide();
+              busStationOverlay.value.hide();
               bus_line1.value.hide();
               bus_line2.value.hide();
+              navigationOverlay.value.hide();
             } else {
               if(showBuildingMarkFlag.value) {//此时点击了回到主页
-                buildingOverlay.show();
-                BusStationOverlay.hide();
+                buildingOverlay.value.show();
+                busStationOverlay.value.hide();
                  bus_line1.value.hide();
                 bus_line2.value.hide();
+                navigationOverlay.value.hide();
               }
               if(showBusStationMarkFlag.value) {
-                buildingOverlay.hide();
-                BusStationOverlay.show();
-                  bus_line1.value.show();
+                buildingOverlay.value.hide();
+                busStationOverlay.value.show();
+                bus_line1.value.show();
                 bus_line2.value.show();
               }
+              if(shownavigationFlag.value){
+                navigationOverlay.value.show();
+              }
             }
-          }
-          );
+          });
+          map.value.on('click',function(e) {
+            if (navigationFlag.value) {
+              const lnglat = e.lnglat;
+              console.log('点击了地图，坐标为：' + lnglat.getLng() + ',' + lnglat.getLat());
+              if(chooseStartFlag.value){
+                start.value = lnglat;
+                SideBarRef.value.setStart(start.value);
+                chooseStartFlag.value = false;
+              }else {
+                end.value = lnglat;
+                SideBarRef.value.setEnd(end.value);
+                chooseStartFlag.value = true;
+              }
+            }
+          });
 
 
 
@@ -688,31 +878,103 @@ export default {
           gate2.value = new AMap.Marker({
             position: [114.001078,22.595102], title: "2号门", label: {content: "2号门"},});
           gate1.value = new AMap.Marker({
-            position: [114.001078,22.595102], title: "1号门", label: {content: "1号门"},});
+            position: [113.999447,22.5932], title: "1号门", label: {content: "1号门"},});
           administration_building.value = new AMap.Marker({
-            position: [114.001078,22.595102], title: "行政楼", label: {content: "行政楼"},});
+            position: [113.997424,22.594107], title: "行政楼", label: {content: "行政楼"},});
           gate7.value = new AMap.Marker({
             position: [113.995269,22.594563], title: "7号门", label: {content: "7号门"},});
           research_building.value = new AMap.Marker({
             position: [113.996637,22.596826], title: "科研楼", label: {content: "科研楼"},});
-          COE.value = new AMap.Marker({
-            position: [113.995249,22.600512], title: "工学院", label: {content: "工学院"},});
+          COEN.value = new AMap.Marker({
+            position: [113.995249,22.600512], title: "工学院北楼", label: {content: "工学院北楼"},});
+          COES.value = new AMap.Marker({
+            position: [113.996741,22.59908], title: "工学院南楼", label: {content: "工学院南楼"},});
 
 
 
+          line1Markers.push(xing_yuan.value,hui_yuan.value, chuang_yuan.value, li_yuan.value,
+              student_dormitry.value, community_health_center.value, faculty_cafeteria.value,
+              guest_house.value, gate3.value, gate2.value, gate1.value,
+              administration_building.value, gate7.value, research_building.value, COEN.value);
 
-          busStationMarkers.push(xing_yuan.value, hui_yuan.value, chuang_yuan.value, li_yuan.value, student_dormitry.value, community_health_center.value, faculty_cafeteria.value, guest_house.value, gate3.value, gate2.value, gate1.value, administration_building.value, gate7.value, research_building.value, COE.value);
+          line2Markers.push(xing_yuan.value, hui_yuan.value, chuang_yuan.value, li_yuan.value,
+              student_dormitry.value,  COES.value, research_building.value);
+
+          busStationMarkers.push(xing_yuan.value, hui_yuan.value, chuang_yuan.value, li_yuan.value, student_dormitry.value, community_health_center.value, faculty_cafeteria.value, guest_house.value, gate3.value, gate2.value, gate1.value, administration_building.value, gate7.value, research_building.value, COEN.value,COES.value);
           for (let i = 0; i < busStationMarkers.length; i++) {
-
             busStationMarkers[i].setIcon('https://vdata.amap.com/icons/b18/1/2.png')
-            busStationMarkers[i].setMap(map);
+            busStationMarkers[i].setMap(map.value);
             busStationMarkers[i].hide();
-            BusStationOverlay.addOverlay(busStationMarkers[i]);
+            busStationOverlay.value.addOverlay(busStationMarkers[i]);
             busStationMarkers[i].on('click', function (e) {
               handleDormitoryClick(e);
             })
           }
 
+
+          map.value.plugin(["AMap.Driving"], function() { //加载驾车服务插件
+            const driving = new AMap.Driving({
+              hideMarkers:true,
+            });
+            if (line1Markers.length > 0){
+              const waypoints1= [];
+              for (let i = 0; i < line1Markers.length; i++) {
+                waypoints1.push(line1Markers[i].getPosition());
+              }
+
+              console.log(waypoints1[0])
+              driving.search([114.002467,22.607841], [113.995249,22.600512], {waypoints: waypoints1},function(status, result) {
+                if (status === 'complete') {
+
+                  const steps = result.routes[0].steps;
+                  let path = [];
+                  for (let i = 0; i < steps.length; i++) {
+                    path = path.concat(steps[i].path);
+                  }
+                  for (let i = 0; i < path.length; i++) {
+                    path[i] = [path[i].lng- 0.00001, path[i].lat -0.00001];
+                  }
+                  bus_line1.value.setPath(path)
+                  bus_line1.value.setMap(map.value);
+                  bus_line1.value.hide();
+                  // 路线规划成功
+                } else {
+
+                  // 路线规划失败
+                }
+                // result即是对应的驾车路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+              });
+            }
+            if (line2Markers.length > 0){
+              const waypoints2 = [];
+              for (let i = 0; i < line2Markers.length; i++) {
+                waypoints2.push(line2Markers[i].getPosition());
+              }
+              driving.search([114.002467,22.607841], [113.996637,22.596826], {waypoints: waypoints2},function(status, result) {
+                if (status === 'complete') {
+
+                  const steps = result.routes[0].steps;
+                  let path = [];
+                  for (let i = 0; i < steps.length; i++) {
+                    path = path.concat(steps[i].path);
+                  }
+                  for (let i = 0; i < path.length; i++) {
+                    path[i] = [path[i].lng+ 0.00001, path[i].lat +0.00001];
+                  }
+                  bus_line2.value.setPath(path);
+                  bus_line2.value.setMap(map.value);
+                  bus_line2.value.hide();
+                  // 路线规划成功
+                } else {
+
+                  // 路线规划失败
+                }
+                // result即是对应的驾车路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+              });
+            }
+
+
+          });
           //创建自定义标签
           // var customLabel = document.createElement('div');
           // customLabel.className = 'custom-label';
@@ -746,21 +1008,35 @@ export default {
 
           markers.push(library1.value,library2.value,library3.value,dormitory1.value,dormitory2.value,dormitory3.value,dormitory4.value,dormitory5.value,dormitory6.value,dormitory7.value,dormitory8.value,dormitory9.value,dormitory10.value,dormitory11.value,dormitory12.value,dormitory13.value,dormitory14.value,dormitory15.value,dormitory16.value,dormitory17.value,cafeteria1.value,cafeteria2.value,cafeteria3.value,cafeteria4.value,cafeteria5.value,cafeteria6.value,teaching_building1.value,teaching_building2.value,teaching_building3.value,research_building1.value,research_building2.value,research_building3.value,college1.value,college2.value,college3.value,college4.value,college5.value,college6.value,college7.value,college8.value,jiu_hua.value,office.value,faculty_apartment1.value,faculty_apartment2.value,faculty_apartment3.value,faculty_apartment4.value,faculty_apartment5.value,faculty_apartment6.value,gym1.value,gym2.value,gym3.value);
           for (let i = 0; i < markers.length; i++) {
-            buildingOverlay.addOverlay(markers[i]);
+            buildingOverlay.value.addOverlay(markers[i]);
             markers[i].on('click', function (e) {
               handleDormitoryClick(e);
             })
           }
-          map.add(buildingOverlay);
-          map.add(BusStationOverlay);
+          map.value.add(buildingOverlay.value);
+          map.value.add(busStationOverlay.value);
+          map.value.add(navigationOverlay.value);
         });
       });
 
 
     return {
+      SideBarRef,
+      start,
+      end,
+      buildingOverlay,
+      busStationOverlay,
+      navigationOverlay,
+      handleNavigation,
+      confirmNavigation,
       markers,
       busStationMarkers,
+      line1Markers,
+      line2Markers,
+      line3Markers,
+      line4Markers,
       showBuildingMarkFlag,
+      shownavigationFlag,
       popoverVisible,
       popoverTop,
       popoverLeft,
@@ -777,12 +1053,13 @@ export default {
       activeSidebar,
       navigateTo,
       showBusStationMarkers,
+      ArrowLeft, House,ChatLineSquare,Timer,ShoppingCart,Search,Van
     };
   },
 
   methods:{
-    setUsername(username) {
-      this.username = username;
+    setUsername() {
+
     },
 }
 
@@ -812,16 +1089,29 @@ export default {
   height: 100vh; /* 100% 屏幕高度 */
 }
 .custom-menu-container {
-  background-color: #808080;
+  background-color: transparent;
   height: 50px;  /* 设置导航栏的高度 */
   display: flex;
   align-items: center; /* 垂直居中 */
+  border-bottom: #45a049;
 }
 .custom-button {
-  background-color: #808080; /* 设置按钮的背景色 */
-  font-size: 20px;
-  color: white;
+
+  background-color: #ffffff; /* 设置按钮的背景色 */
+  font-size: 13px;
+  color: #111010;
   margin-left: 20px; /* 设置左边边距 */
   font-family: 'Roboto', sans-serif;
+  border-radius: 20px; /* 设置按钮的圆角 */
+  border: 1px solid #dcdcdc; /* 添加边框 */
+}
+
+.custom-div{
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.sidebar {
+  z-index: 999; /* 设置一个较高的z-index值，以确保sidebar显示在最上层 */
 }
 </style>
