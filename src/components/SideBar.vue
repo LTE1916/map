@@ -129,7 +129,6 @@
       </el-radio-group>
       <el-table :data="tableData" stripe style="width: 100%">
         <el-table-column prop="step" label="steps" width:100 />
-
       </el-table>
     </div>
 
@@ -446,6 +445,7 @@ export default {
       })
       this.loadRating()
     },
+
     formattedDate(originalDate) {
       return dayjs(originalDate).format('YYYY年MM月DD日 HH:mm:ss');
     },

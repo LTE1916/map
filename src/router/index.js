@@ -32,6 +32,33 @@ const routes = [
         path: '/product',
         name: 'product',
         component: () => import(/* webpackChunkName: "order" */ '../components/CulturalProduct.vue'),
+    },
+    {
+        path: '/manager',
+        name:'manager',
+        component:()=>import('../components/manager/manager.vue'),
+        children:[
+            {
+                path: '/person',
+                name:'person',
+                component:()=>import('../components/manager/Person.vue')
+            },
+            {
+                path: '/checkComment',
+                name: 'check',
+                component:()=>import('../components/manager/checkComment.vue')
+            },
+            {
+                path: '/misc',
+                name:'misc',
+                component:()=>import('../components/manager/misc.vue')
+            }
+        ]
+    },
+    {
+        path:'/calendar',
+        name:'calendar',
+        component:()=>import('../components/CalenDar.vue')
     }
     // ...其他路由
 ];
