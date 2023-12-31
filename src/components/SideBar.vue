@@ -1,5 +1,5 @@
 <template>
-  <transition name="slide">
+  <transition name="slide" >
   <div class="sidebar" v-show="this.sideBarVisible" >
     <div v-show="this.scrollbarVisible">
       <el-scrollbar ref="scrollbarRef" height="100%">
@@ -299,6 +299,8 @@ export default {
     });
   },
   methods: {
+
+
     selectNavigationMethod(val){
       if (val === 'walk'){
         this.navigationMethod = 'walk'
@@ -364,13 +366,13 @@ export default {
       }
     },
     loadComment() {
-      // this.$request.get(`/comment/findTree/${this.name}`)
-      //     .then((response) => {
-      //       if (response.code === "200") {
-      //         this.comments = response.data
-      //         console.log(this.comments)
-      //       }
-      //     })
+      this.$request.get(`/comment/findTree/${this.name}`)
+          .then((response) => {
+            if (response.code === "200") {
+              this.comments = response.data
+              console.log(this.comments)
+            }
+          })
     },
     loadRating() {
       // this.$request.get('/comment/getRating', {
@@ -452,6 +454,7 @@ export default {
 
     toggleSidebar() {
       this.sideBarVisible = !this.sideBarVisible;
+      this.$parent.updateMenu(this.sideBarVisible);
       // 根据侧边栏的可见性调整按钮的位置
       if (this.sideBarVisible === true){
         this.buttonStyle = "  position: absolute;\n" +
@@ -468,6 +471,10 @@ export default {
       }
 
     }
+    ,
+    getSideBarVisible(){
+      return this.sideBarVisible
+    },
   }
 
 };
@@ -478,7 +485,7 @@ export default {
   display: block;
   flex-direction: column; /* 如果希望子元素垂直排列 */
   width: 400px;
- position: fixed; top: 60px; left: 0; height: 100%; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  position: fixed; top: 0; left: 0; height: 100%; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   background-color: #f0f0f0;
   /* 样式细节 */
 }
@@ -542,13 +549,15 @@ img {
   /* 根据需要添加其他样式 */
 }
 .slide-enter-active{
-  transition: transform 1.3s ease-in-out;
+  transform: translateX(-400px); /* 侧边栏初始位置 */
+  transition: transform 0.3s ease-in-out;
 }
 .slide-leave-active {
-  transition: transform 1.3s ease-in-out;
+  transition: transform 0.3s ease-in-out;
 }
 .slide-enter-to {
-  transform: translateX(0%); /* 侧边栏宽度的相反方向移动 */
+
+  transform: translateX(0px); /* 侧边栏宽度的相反方向移动 */
 }
 .slide-leave-to {
   transform: translateX(-100%); /* 侧边栏宽度的相反方向移动 */

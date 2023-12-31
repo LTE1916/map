@@ -51,6 +51,7 @@
       <sidebar  ref="sidebarRef"></sidebar> <!-- 在map.vue中使用sidebar组件 -->
     </div>
   </div>
+
   <el-menu class = "custom-menu-container" mode="horizontal" text-color="#ffffff" active-text-color="#ffd04b"
            background-color="transparent ">
     <el-button :icon="House"  class="custom-button" @click="navigateTo('0')">主页</el-button>
@@ -72,7 +73,7 @@ import Sidebar from './SideBar.vue'; // 导入sidebar.vue组件
 import {ElButton, ElPopover, ElUpload } from 'element-plus';
 import 'element-plus/dist/index.css'
 
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, onMounted, ref,} from "vue";
 import {House,ChatLineSquare,Timer,ShoppingCart,Search,ArrowLeft,Van} from "@element-plus/icons-vue";
 export default {
   components: {
@@ -82,7 +83,9 @@ export default {
     ElPopover,
 
   },
+
   setup(){
+
     const map = ref(null);
     const amap = ref(null)
     const markers = [];
@@ -107,7 +110,8 @@ export default {
     const chooseStartFlag = ref(true);
     const start = ref('');
     const end = ref('');
-
+    const startStation = ref(null);//起点最近的站点
+    const endStation = ref(null);
     const title = ref('');
     const introduction = ref('');
     const username = ref("");
@@ -191,6 +195,34 @@ export default {
     const COES = ref(null)
     const SideBarRef = ref(null);
     const { proxy } = getCurrentInstance();
+    const instance = getCurrentInstance()
+    // 访问全局插件
+    const request = instance.appContext.config.globalProperties.$request
+
+    async function fetchStartEndStation() {
+
+      while (startStation.value === null || endStation.value === null) {
+        // 等待startStation和endStation的值都不为null
+        await new Promise(resolve => setTimeout(resolve, 100)); // 等待100毫秒
+      }
+      console.log(startStation.value.getTitle())
+      console.log(endStation.value.getTitle());
+      try {
+        const response = await request.get(`/line-station/busRoute/`, {
+          params: {
+            start: startStation.value.getTitle(),
+            end: endStation.value.getTitle(),
+          }
+        });
+
+        return response.data;
+      } catch (error) {
+        // 处理请求错误
+        console.error('请求失败', error);
+
+      }
+    }
+    //异步函数获取公交导航的站点
     const navigateTo = (index) => {
 
       switch (index) {
@@ -247,6 +279,15 @@ export default {
       bus_line2.value.hide();
       navigationOverlay.value.hide()
       SideBarRef.value.resetSideBar()
+      updateMenu()
+    }
+    const updateMenu = (vis) => {
+      const menu = document.querySelector('.custom-menu-container')
+      if (vis) {
+        menu.style.left = '400px'
+      } else {
+        menu.style.left = '0'
+      }
     }
 
     const showBusStationMarkers = () => {
@@ -265,6 +306,7 @@ export default {
     const handleNavigation = () => {
       navigationFlag.value = true;
       SideBarRef.value.handleNavigate();
+
       // Implement the logic to navigate to the desired location
     }
     const confirmNavigation = (navigationMethod) => {
@@ -282,11 +324,10 @@ export default {
         const mapValue = map.value;
 
         // 执行导航逻辑
-        mapValue.plugin(["AMap.Walking"], function() {
-          const walking = new amap.value.Walking({
-          });
-          if (navigationMethod === 'walk'){
-            walking.search(start.value, end.value,function(status, result) {
+        mapValue.plugin(["AMap.Walking"],  () => {
+          const walking = new amap.value.Walking({});
+          if (navigationMethod === 'walk') {
+            walking.search(start.value, end.value, function (status, result) {
               if (status === 'complete') {
                 const steps = result.routes[0].steps;
                 let path = [];
@@ -297,7 +338,7 @@ export default {
                 }
                 SideBarRef.value.setSteps(instructions);
                 walking_line.value = new amap.value.Polyline({
-                  strokeOpacity:1,
+                  strokeOpacity: 1,
                   strokeWeight: 6,  // 线宽
                   borderWeight: 1,  // 线宽
                   strokeColor: "#63e398",  // 线颜色
@@ -313,7 +354,6 @@ export default {
               }
             });
           }
-
           else if (navigationMethod === 'bus'){
             // buildingOverlay.value.hide();
             // busStationOverlay.value.show();
@@ -323,15 +363,15 @@ export default {
 
             const bus_route_mid = new amap.value.Polyline({
               strokeOpacity:1,
-              strokeWeight: 6,
+              strokeWeight: 4,
               borderWeight: 1,
               strokeColor: "#7e99f4",
 
               lineJoin: 'round'
             });
 
-            const nearestStartStation = nearestStations(busStationMarkers, start.value,3);
             //nearestStartStation是marker数组
+            const nearestStartStation = nearestStations(busStationMarkers, start.value,3);
             const nearestEndStation = nearestStations(busStationMarkers, end.value,3);
             for (let i = 0; i < nearestStartStation.length; i++) {
 
@@ -354,8 +394,6 @@ export default {
               });
             }
 
-            //todo 后端获取公交
-
             for (let i = 0; i < nearestStartStation.length; i++) {
               walking.search(nearestEndStation[i].getPosition(), end.value,function(status, result) {
                 const instructions = [];
@@ -366,14 +404,45 @@ export default {
                     tmpPath = tmpPath.concat(steps[i].path);
                     instructions.push(steps[i].instruction)
                   }
-
                   addEndNearStation(nearestEndStation[i],result.routes[0].distance ,tmpPath, instructions,nearestEndStation.length)
+                  //异步add,所以要判断是否全部add完，全部add完再画公交线路
                 }
               });
             }
+            //todo 后端获取公交
+            fetchStartEndStation().then((waypointArr) => {
+              // Use the result array returned by the fetchStartEndStation function
+              const waypoint= [];//中间站点
+              for (let i = 1; i < waypointArr.length-1; i++) {
+                waypoint.push([waypointArr[i].longitude, waypointArr[i].latitude]);
+              }
+              const startPosition = [waypointArr[0].longitude,waypointArr[0].latitude];
+              const endPosition = [waypointArr[waypointArr.length-1].longitude,waypointArr[waypointArr.length-1].latitude];
+              console.log(startPosition,endPosition)
+              const driving = new amap.value.Driving({});
+              driving.search(startPosition,endPosition,{waypoints:waypoint},function(status, result) {
+                    const instructions = [];
+                    console.log(status)
+                    if (status === 'complete') {
+                      let tmpPath = [];
+                      const steps = result.routes[0].steps;
+                      for (let i = 0; i < steps.length; i++) {
+                        tmpPath = tmpPath.concat(steps[i].path);
+                        instructions.push(steps[i].instruction)
+                      }
+                      console.log(steps)
+                      bus_route_mid.setPath(tmpPath)
+                      bus_route_mid.setMap(map.value);
+                      navigationOverlay.value.addOverlay(bus_route_mid)
+                    }
+                  });
 
+              navigationOverlay.value.addOverlay(bus_route_mid)
+            }).catch((error) => {
+              // Handle any error that occurred during the fetchStartEndStation function
+              console.error(error);
+            });
 
-            navigationOverlay.value.addOverlay(bus_route_mid)
 
             }
 
@@ -413,6 +482,7 @@ export default {
         bus_route_start.setMap(map.value);
         navigationOverlay.value.addOverlay(bus_route_start)
         SideBarRef.value.addSteps(minDistanceRecord.instructions)
+        startStation.value = minDistanceRecord.station;
         nearStartRecords=[];
       }
 
@@ -420,15 +490,13 @@ export default {
 
     const addEndNearStation = (nearestStartStation, distance, tmpPath, instructions, num) =>{
       nearEndRecords.push({
-        station: nearestStartStation,
+        station: nearestStartStation,//marker
         distance:distance,
         path: tmpPath,
         instructions: instructions
       });
       if (num === nearEndRecords.length) {
-        const minDistanceRecord = nearEndRecords.reduce((minRecord, record) => {
-          return (minRecord.distance < record.distance) ? minRecord : record;
-        });
+        const minDistanceRecord = nearEndRecords.reduce((minRecord, record) => {return (minRecord.distance < record.distance) ? minRecord : record;});
         const bus_route_end = new amap.value.Polyline({
           strokeOpacity:1,
           strokeWeight: 6,
@@ -441,6 +509,7 @@ export default {
         bus_route_end.setMap(map.value);
         navigationOverlay.value.addOverlay(bus_route_end)
         SideBarRef.value.addSteps(minDistanceRecord.instructions)
+        endStation.value = minDistanceRecord.station;
         nearEndRecords=[];
       }
 
@@ -473,12 +542,14 @@ export default {
       popoverVisible.value = true;
       title.value = $event.target._originOpts.title;
       SideBarRef.value.setName(title.value);
+
     }
 
     };
     onMounted(() => {
 
       SideBarRef.value = proxy.$refs.sidebarRef;
+
       window._AMapSecurityConfig = {
         securityJsCode: '9cd0ae12178c767342bff17cbf6ed653',
       }
@@ -973,7 +1044,6 @@ export default {
               });
             }
 
-
           });
           //创建自定义标签
           // var customLabel = document.createElement('div');
@@ -1017,6 +1087,7 @@ export default {
           map.value.add(busStationOverlay.value);
           map.value.add(navigationOverlay.value);
         });
+
       });
 
 
@@ -1029,6 +1100,7 @@ export default {
       navigationOverlay,
       handleNavigation,
       confirmNavigation,
+      updateMenu,
       markers,
       busStationMarkers,
       line1Markers,
@@ -1089,6 +1161,8 @@ export default {
   height: 100vh; /* 100% 屏幕高度 */
 }
 .custom-menu-container {
+  position: relative;
+  left: 0; /* 改变X坐标 */
   background-color: transparent;
   height: 50px;  /* 设置导航栏的高度 */
   display: flex;
@@ -1114,4 +1188,5 @@ export default {
 .sidebar {
   z-index: 999; /* 设置一个较高的z-index值，以确保sidebar显示在最上层 */
 }
+
 </style>
