@@ -13,9 +13,13 @@
         >
           <el-sub-menu v-for="(building, index) in buildings" :key="index" :index="index + 1">
             <template #title>
-              <span @click="selectBuilding(building)">{{ building }}</span>
+              <span >{{ building.name}}</span>
             </template>
-            <el-menu-item v-for="floor in floors" :key="floor" :index="(index + 1) * 10 + floor" @click="selectFloor(floor)">
+            <el-menu-item
+                v-for="floor in getFloors(building.floorNumber)"
+                :key="floor"
+                :index="(index + 1) * 10 + floor"
+                @click="selectFloor(building,floor)">
               {{ floor }}楼
             </el-menu-item>
           </el-sub-menu>
@@ -31,34 +35,29 @@
       </el-col>
     </el-row>
 
-    <!-- 教室和预约界面 -->
     <div class="content">
       <div>
         <template v-if="selectedFloor">
           <!-- FullCalendar 组件 -->
-          <FullCalendar :options="calendarOptions" ref="calendarRef" class="custom-calendar"/>
+          <FullCalendar :options="this.calendarOptions" ref="calendarRef" class="custom-calendar"/>
 
-          <!-- el-popover 弹窗 -->
-          <el-popover
-              v-model="popoverVisible"
-              placement="right"
-              title="教室预订"
-              width="300"
+          <el-dialog
+              v-model="dialogVisible"
+              title="Tips"
+              width="30%"
           >
-            <el-form label-position="top">
-              <el-form-item label="教室名称">
-                <el-input v-model="selectedRoomName" disabled />
-              </el-form-item>
-              <el-form-item label="选择的时间段">
-                <el-time-picker
-                    v-model="selectedTimeRange"
-                    is-range
-                    format="HH:mm"
-                    value-format="HH:mm"
-                />
-              </el-form-item>
-            </el-form>
-          </el-popover>
+            <span>This is a message</span>
+            <template #footer>
+            <span class="dialog-footer">
+              <el-button @click="dialogVisible = false">Cancel</el-button>
+              <el-button type="primary" @click="dialogVisible = false">
+                Confirm
+              </el-button>
+            </span>
+            </template>
+
+          </el-dialog>
+
         </template>
       </div>
     </div>
@@ -66,12 +65,11 @@
 </template>
 
 <script>
-import { ref, watchEffect } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin from '@fullcalendar/interaction';
-import { ElRow, ElCol, ElMenu, ElMenuItem, ElForm, ElFormItem, ElInput, ElTimePicker } from 'element-plus';
+import {ElCol, ElMenu, ElMenuItem, ElRow} from 'element-plus';
 
 export default {
   components: {
@@ -80,123 +78,160 @@ export default {
     ElCol,
     ElMenu,
     ElMenuItem,
-    ElForm,
-    ElFormItem,
-    ElInput,
-    ElTimePicker,
   },
-  setup() {
-    const selectedBuilding = ref(null);
-    const selectedFloor = ref(null);
-    const selectedRoomName = ref('');
-    const selectedTimeRange = ref([]);
-    const popoverVisible = ref(false);
-    const buildings = ['第一教学楼', '第三教学楼'];
-    const floors = [1, 2, 3, 4, 5];
-    const roomsPerFloor = 9;
-    const calendarRef = ref(null);
-
-    const selectBuilding = (building) => {
-      selectedBuilding.value = building;
-    };
-
-    const selectFloor = (floor) => {
-      selectedFloor.value = floor;
-      updateFullCalendar(floor);
-    };
-
-    const getRoomsByFloor = (floor) => {
-      const rooms = [];
-      for (let i = 1; i <= roomsPerFloor; i++) {
-        rooms.push(`${floor * 100 + i}`);
-      }
-      return rooms;
-    };
-    const handleTimeRangeSelect = (info) => {
-      console.log("---------------------")
-      if (info.start && info.end) {
-        selectedRoomName.value = `Room ${info.resource.id}`;
-        selectedTimeRange.value = [info.start, info.end];
-        popoverVisible.value = true;
-      }
-    };
-    const closeDialog = () => {
-      popoverVisible.value = false;
-    };
-    const calendarOptions = ref({
-      licenseKey: 'GPL-My-Project-Is-Open-Source',
-      plugins: [dayGridPlugin, resourceTimelinePlugin,interactionPlugin],
-      initialView: 'resourceTimelineDay',
-      slotMinTime: '08:00:00',
-      slotMaxTime: '22:00:00',
-      height: '700px',
-      resources: [],
-      events: [],
-      selectable: true,
-      select: handleTimeRangeSelect,
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
-      },
-      views: {
-        resourceTimelineDay: {
-          buttonText: 'Day',
-        },
-        resourceTimelineWeek: {
-          buttonText: 'Week',
-        },
-        resourceTimelineMonth: {
-          buttonText: 'Month',
-        },
-      },
-    });
-    const updateFullCalendar = (floor) => {
-      const resources = getRoomsByFloor(floor).map((room) => ({
-        id: room,
-        title: `Room ${room}`,
-      }));
-
-      const events = [
-        ...getRoomsByFloor(floor).map((room) => ({
-          title: `Meeting ${room}`,
-          resourceId: room,
-          start: '2023-12-30T10:00:00',
-          end: '2023-12-30T15:00:00',
-          backgroundColor: 'green',
-        })),
-      ];
-
-      calendarOptions.value.resources = resources;
-      calendarOptions.value.events = events;
-    };
-
-    watchEffect(() => {
-      if (calendarRef.value) {
-        calendarRef.value.getApi().refetchEvents();
-      }
-    });
-
+  data() {
     return {
-      selectedBuilding,
-      selectedFloor,
-      selectedRoomName,
-      selectedTimeRange,
-      popoverVisible,
-      buildings,
-      floors,
-      roomsPerFloor,
-      selectBuilding,
-      selectFloor,
-      getRoomsByFloor,
-      calendarOptions,
-      calendarRef,
-      handleTimeRangeSelect,
-      closeDialog,
+      selectedBuilding: null,
+      selectedFloor: null,
+      selectedRoomName: '',
+      selectedTimeRange: [null, null],
+      dialogVisible: false,
+      reservation:{},
+      buildings: [],
+      roomsPerFloor: 9,
+      calendarRef: null,
+      calendarOptions: {
+        licenseKey: 'GPL-My-Project-Is-Open-Source',
+        plugins: [dayGridPlugin, resourceTimelinePlugin, interactionPlugin],
+        initialView: 'resourceTimelineDay',
+        slotMinTime: '08:00:00',
+        slotMaxTime: '22:00:00',
+        height: '700px',
+        resources: [],
+        events: [],
+        selectable: true,
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
+        },
+        views: {
+          resourceTimelineDay: { buttonText: 'Day' },
+          resourceTimelineWeek: { buttonText: 'Week' },
+          resourceTimelineMonth: { buttonText: 'Month' },
+        },
+      },
+
     };
   },
+  created() {
+    this.loadData()
+  },
+  methods: {
+    loadData() {
+      this.$request.get('/booking-info/building').then((res) => {
+        if (res.code === "200") {
+          this.buildings = res.data
+          console.log("buildings")
+          console.log(this.buildings)
+        } else {
+          console.error("get building information error")
+        }
+      })
+    },
+    // loadAllEvent(){
+    //   this.$request.get('/booking-info/all').then((res)=>{
+    //     if (res.code ==="200"){
+    //       const events = res.data;
+    //
+    //     }else{
+    //       console.error("all")
+    //     }
+    //   })
+    // },
+    loadClassroom(building, floor) {
+      return this.$request.get(`/classroom/searchFloor?building=${building}&floor=${floor}`).then((res) => {
+        if (res.code === "200") {
+          const classrooms = res.data;
+          this.calendarOptions.resources = classrooms.map(classroom => ({
+            id: classroom.id,
+            title: classroom.name
+          }));
+          return classrooms;
+        } else {
+          console.error("fail");
+          throw new Error('Request failed');
+        }
+      }).catch((error) => {
+        console.error('Error during API request:', error);
+        throw error;
+      });
+    },
+
+    async loadCurEvents(classrooms){
+      for (const classroom of classrooms) {
+        try {
+          // 发送 POST 请求
+          this.$request.post('/booking-info/Room', classroom).then((response)=>{
+            const classroomEvents = response.data;
+            for (const booking of classroomEvents) {
+              const event = {
+                resourceId: classroom.id,
+                start: booking.startTime,
+                end: booking.endTime,
+                backgroundColor: 'green'
+              };
+              console.log(event);
+              this.calendarOptions.events.push(event);
+            }
+          })
+          // 假设响应中的数据是我们需要的事件数组
+        } catch (error) {
+          console.error('Error fetching events:', error);
+        }
+      }
+    },
+    selectFloor(building,floor) {
+      this.selectedFloor = floor;
+      console.log(this.selectedFloor)
+      this.updateFullCalendar(building,floor);
+    },
+    handleTimeRangeSelect(info) {
+      console.log("Info:", info);
+      if (
+          info &&
+          info.start &&
+          info.end &&
+          typeof info.start.getHours === 'function' &&
+          typeof info.end.getHours === 'function'
+      ) {
+        this.selectedRoomName = `Room ${info.resource.id}`;
+        this.selectedTimeRange = [info.start, info.end];
+        this.dialogVisible = true;
+        console.log(info)
+      } else {
+        console.error("Invalid or missing information for time range selection");
+      }
+    },
+    closeDialog() {
+      this.dialogVisible = false;
+    },
+    getFloors(floor) {
+      console.log(floor)
+      console.log(Array.from({ length: floor }, (_, i) => i + 1))
+      return Array.from({ length: floor }, (_, i) => i + 1);
+    },
+    updateFullCalendar(building, floor) {
+      console.log("updateFull")
+      this.loadClassroom(building.name, floor).then(classrooms => {
+        this.loadCurEvents(classrooms)
+      }).catch(error => {
+        console.error('Error loading classrooms:', error);
+      });
+    }
+
+  },
+  mounted() {
+    this.calendarOptions.select = this.handleTimeRangeSelect;
+    this.$watch(() => this.calendarRef, (newVal) => {
+      if (newVal) {
+        newVal.getApi().refetchEvents();
+      }
+    });
+  }
 };
 </script>
+
 
 
 <style>
@@ -208,11 +243,13 @@ export default {
   background-size: cover;
   min-height: 94vh;
 }
+
 .content {
   width: 80%;
   padding: 20px;
   box-sizing: border-box;
 }
+
 .custom-calendar {
   border: 1px solid #ddd;
   border-radius: 8px;
