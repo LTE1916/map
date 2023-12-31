@@ -42,21 +42,24 @@ export default {
 }
 </script>
 <template>
-  <el-container class="layout-container-demo" style="height: 500px">
-    <el-header style="display: flex; justify-content: space-between; font-size: 20px">
+  <el-container class="layout-container-demo" >
+    <el-header style="display: flex;justify-content: space-between; font-size: 20px">
       <!-- 左边容器，只包含 logo -->
       <div>
         <img
-            style="width: 150px; height: 100%;"
-            src="../../assets/LOGO.png"
+            style="width: 600px; height: 100%;"
+            src="../../assets/LOGO1.png"
             alt="Sustech logo"
         />
       </div>
 
+      <div>
+        <h1 style="font-family: '黑体',serif; line-height: 180px; color: black; margin-left: -600px;">用户管理系统</h1>
+      </div>
       <!-- 右边容器，包含下拉菜单和用户名 -->
       <div class="toolbar">
         <el-dropdown>
-          <el-icon style="margin-right: 8px; margin-top: 1px" :size="20">
+          <el-icon style="margin-right: 8px; margin-top: 1px" :size="30">
             <setting/>
           </el-icon>
           <template #dropdown>
@@ -66,11 +69,11 @@ export default {
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <span>Tom</span>
+        <span>Setup</span>
       </div>
     </el-header>
     <el-container>
-      <el-aside width="200px">
+      <el-aside width="220px">
         <el-scrollbar>
           <el-menu :default-openeds="['1', '3']">
             <el-menu-item index="1" @click="handleInfo()">
@@ -78,7 +81,7 @@ export default {
                 <el-icon>
                   <message/>
                 </el-icon>
-                个人信息
+                <span class="menu-item-text">个人信息</span>
               </template>
             </el-menu-item>
             <el-menu-item index="2" @click="handleChecking()">
@@ -86,7 +89,7 @@ export default {
                 <el-icon>
                   <message/>
                 </el-icon>
-                审核评论
+                <span class="menu-item-text">审核评论</span>
               </template>
             </el-menu-item>
             <el-menu-item index="3" @click="handlemisc()">
@@ -94,17 +97,16 @@ export default {
                 <el-icon>
                   <message/>
                 </el-icon>
-                批注册以及黑名单设置
+                <span class="menu-item-text">批注册及黑名单设置</span>
               </template>
             </el-menu-item>
           </el-menu>
         </el-scrollbar>
       </el-aside>
-      <el-main>
+      <el-main style="height: 750px;">
         <div class="subview">
           <el-scrollbar>
-            <router-view>
-            </router-view>
+            <router-view></router-view>
           </el-scrollbar>
         </div>
       </el-main>
@@ -115,10 +117,15 @@ export default {
 <style scoped>
 
 .layout-container-demo .el-header {
-  height: 20%;
+  height: 150px;
   position: relative;
-  background-color: var(--el-color-primary-light-7);
+  background: var(--el-color-primary-light-8);
   color: var(--el-text-color-primary);
+}
+.menu-item-text {
+  font-size: 16px;    /* 调整字体大小 */
+  font-weight: bold;  /* 将字体设置为黑体 */
+  color: rgb(128, 128, 128);       /* 设置字体颜色为黑色 */
 }
 
 .layout-container-demo .el-aside {
@@ -128,13 +135,14 @@ export default {
 
 .layout-container-demo .el-menu {
   border-right: none;
+  background: var(--el-color-primary-light-8);
 }
 
 .layout-container-demo .el-main {
-  margin: 20px;
+
   padding: 20px; /* 添加内间距 */
-  border: 1px solid #111010; /* 添加边框 */
-  background-color: #42b983;
+
+  background: linear-gradient(to right, var(--el-color-primary-light-8), #BC8F8F);
 }
 
 .subview {

@@ -115,9 +115,9 @@ export default {
   border: 1px solid #ccc; /* 边框 */
   padding: 10px; /* 内边距 */
   margin-bottom: 15px; /* 间距 */
-  background-color: #f9f9f9; /* 背景色 */
   border-radius: 10px; /* 圆角 */
   box-shadow: 0px 2px 4px rgba(0,0,0,0.1); /* 阴影效果 */
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .avatar {
