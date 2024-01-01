@@ -59,6 +59,11 @@ const routes = [
         path:'/calendar',
         name:'calendar',
         component:()=>import('../components/CalenDar.vue')
+    },
+    {
+        path: '/bookingInfo',
+        name:'BookingInfo',
+        component:()=>import('../components/booking-info.vue')
     }
     // ...其他路由
 ];
