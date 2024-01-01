@@ -38,17 +38,17 @@
         <div class="content">
           <div class="summary" v-show="activeIndex===1">
             <div class="summary.text">
-              {{ this.building.text }}
+              {{ this.building.text}}
             </div>
             <div class="summary.photo">
-              <img :src="this.building.photoUrl" alt="建筑图片">
+              <img :src="this.building" alt="建筑图片">
             </div>
             <div>
             </div>
           </div>
           <div class="comment" v-show="activeIndex===2">
             <div style="display: flex; justify-content: center; align-items: center;">
-              <el-button :icon="Edit" color="#626aef" round @click="this.dialogVisible = true">我要评价</el-button>
+              <el-button :icon="Edit" color="#626aef" round @click="this.dialogVisible = true" v-if="showComponent">我要评价</el-button>
             </div>
 
             <div v-for="item in comments" :key="item.id" style="border-bottom: 1px solid #ccc; padding: 10px 0; ">
@@ -69,8 +69,9 @@
                       <i class="el-icon-time"></i><span style="margin-left: 5px">{{ formattedDate(item.time) }}</span>
                     </div>
                     <div style="text-align: right; flex: 1">
-                      <el-button style="margin-left: 5px" link @click="handleReply(item)">回复</el-button>
-                      <el-button link style="color: red" @click="del(item.id)" v-if="user.id === item.userId">删除
+                      <el-button style="margin-left: 5px" link @click="handleReply(item)" v-if="showComponent">回复</el-button>
+                      <el-button link style="color: red" @click="del(item.id)"
+                                 v-if="((user.id === item.userId)&&(this.user.authority === 'USER' || this.user.authority === 'ADMIN'))">删除
                       </el-button>
                     </div>
                   </div>
@@ -225,6 +226,9 @@ import {ArrowLeft, ArrowRight, ArrowUp, Edit} from "@element-plus/icons-vue";
 export default {
 
   computed: {
+    showComponent() {
+      return this.user.authority === 'USER' || this.user.authority === 'ADMIN';
+    },
 
     ArrowRight() {
       return ArrowRight
@@ -255,17 +259,25 @@ export default {
   },
   data() {
     return {
+      userInfo: JSON.parse(localStorage.getItem("user")),//获取用户权限
       reviewContent: {},
       comments: [],
       reviews: 0,
       rating: 0,
-      name: "学生宿舍7栋",
+      name: "第一教学楼",
       commentIsTop: false,
       activeIndex: 1,
       user: {},
       dialogVisible: false,
       commentVisible: false,
-      building: {},
+      building: {
+        id: 11,
+        name: "第一教学楼",
+        text: "第一教学楼的描述",
+        photoUrl: "http://example.com/image1.jpg",
+        bookingAvailable: false,
+        floorNumber: 1
+      },
       replydialogVisible: false,
       currentReply: {},
       sideBarVisible:false,
@@ -374,38 +386,38 @@ export default {
           })
     },
     loadRating() {
-      // this.$request.get('/comment/getRating', {
-      //   params: {
-      //     building: this.name
-      //   }
-      // }).then((response) => {
-      //   if (response.code === "200") {
-      //     this.rating = response.data.rating
-      //     this.reviews = response.data.reviewNumber
-      //   }
-      // })
+      this.$request.get('/comment/getRating', {
+        params: {
+          building: this.name
+        }
+      }).then((response) => {
+        if (response.code === "200") {
+          this.rating = response.data.rating
+          this.reviews = response.data.reviewNumber
+        }
+      })
     },
     loadData() {
       this.user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : {}
 
-      // this.$request.get('/building/search', {
-      //   params: {
-      //     name: this.name
-      //   }
-      // })
-      //     .then((response) => {
-      //       // 使用箭头函数
-      //       if (response.code === "200") {
-      //         this.building = response.data
-      //         console.log(this.building.text)
-      //         console.log(this.building.photoUrl)
-      //       } else {
-      //         console.log('lost')
-      //       }
-      //     })
-      //     .catch((error) => {
-      //       console.log(error);
-      //     });
+      this.$request.get('/building/search', {
+        params: {
+          name: this.name
+        }
+      })
+          .then((response) => {
+            // 使用箭头函数
+            if (response.code === "200") {
+              this.building = response.data
+              console.log(this.building.text)
+              console.log(this.building.photoUrl)
+            } else {
+              console.log('lost')
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+          });
     },
     handleClick1() {
       this.activeIndex = 1

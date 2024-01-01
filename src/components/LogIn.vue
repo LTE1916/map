@@ -61,13 +61,23 @@ export default {
           {min: 1, max: 20, message: '长度在 1 到 20 个字符', trigger: 'blur'}
         ],
       },
-      role: "user",
+      role: "guest",
       loggedIn: false
     };
   },
   methods: {
     enterGuestMode() {
       // Implement guest mode logic
+      let res={
+        code:200,
+        msg:"success",
+        data:{}
+      };
+      res.data = {
+        username: "guest",
+        authority: "GUEST"
+      }
+      localStorage.setItem("user", JSON.stringify(res.data))  // 存储用户信息到浏览器
       this.$emit('login-success');
       this.$router.push("/map")
     },
@@ -83,7 +93,7 @@ export default {
                 this.loggedIn = true;
                 console.log(res.data)
                 localStorage.setItem("user", JSON.stringify(res.data))  // 存储用户信息到浏览器
-                this.$router.push("/side")
+                this.$router.push("/map")
                 this.$message.success("login success")
               } else {
                 this.$message.error(res.msg)
@@ -96,6 +106,7 @@ export default {
           }
         });
       }else {
+
         console.log(this.role)
       }
     },

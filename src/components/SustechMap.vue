@@ -54,10 +54,12 @@
 
   <el-menu class = "custom-menu-container" mode="horizontal" text-color="#ffffff" active-text-color="#ffd04b"
            background-color="transparent ">
-    <el-button :icon="House"  class="custom-button" @click="navigateTo('0')">主页</el-button>
+    <el-button :icon="House"  class="custom-button" @click="navigateTo('0')" >主页</el-button>
     <el-button :icon="ChatLineSquare" class="custom-button" @click="navigateTo('1')">论坛</el-button>
-    <el-button :icon="Timer" class="custom-button" @click="navigateTo('2')">教室预定</el-button>
-    <el-button :icon="ShoppingCart" class="custom-button" @click="navigateTo('3')"> 文创购物 </el-button>
+    <el-button :icon="Timer" class="custom-button" @click="navigateTo('2')"
+               v-if="user && (user.authority === 'USER' || user.authority === 'ADMIN')">教室预定</el-button>
+    <el-button :icon="ShoppingCart" class="custom-button" @click="navigateTo('3')"
+               v-if="user && (user.authority === 'USER' || user.authority === 'ADMIN')"> 文创购物 </el-button>
     <el-button :icon="Van" class="custom-button" @click="navigateTo('4')"> 公交站点 </el-button>
     <el-button :icon="Search" class="custom-button" @click="navigateTo('5')"> 导航 </el-button>
     <el-button :icon="ArrowLeft" round >test button</el-button>
@@ -85,9 +87,11 @@ export default {
   },
 
   setup(){
-
+    const user = JSON.parse(localStorage.getItem("user"));
+    console.log(user,user.authority,user.username)
     const map = ref(null);
     const amap = ref(null)
+
     const markers = [];
     const busStationMarkers = [];
     const line1Markers = [];//公交线路，内部存marker
@@ -205,8 +209,8 @@ export default {
         // 等待startStation和endStation的值都不为null
         await new Promise(resolve => setTimeout(resolve, 100)); // 等待100毫秒
       }
-      console.log(startStation.value.getTitle())
-      console.log(endStation.value.getTitle());
+      // console.log(startStation.value.getTitle())
+      // console.log(endStation.value.getTitle());
       try {
         const response = await request.get(`/line-station/busRoute/`, {
           params: {
@@ -258,8 +262,8 @@ export default {
 
     const submitReview = () => {//到时候提交给后台
       // Implement the logic to submit the review (text and/or image)
-      console.log('Review Text:', reviewText.value);
-      console.log('Selected File:', selectedFile.value);
+      // console.log('Review Text:', reviewText.value);
+      // console.log('Selected File:', selectedFile.value);
 
       // Close the review form after submission
       reviewFormVisible.value = false;
@@ -357,7 +361,7 @@ export default {
           else if (navigationMethod === 'bus'){
             // buildingOverlay.value.hide();
             // busStationOverlay.value.show();
-            console.log('bus')
+
             const walking = new amap.value.Walking();
 
 
@@ -418,11 +422,11 @@ export default {
               }
               const startPosition = [waypointArr[0].longitude,waypointArr[0].latitude];
               const endPosition = [waypointArr[waypointArr.length-1].longitude,waypointArr[waypointArr.length-1].latitude];
-              console.log(startPosition,endPosition)
+
               const driving = new amap.value.Driving({});
               driving.search(startPosition,endPosition,{waypoints:waypoint},function(status, result) {
                     const instructions = [];
-                    console.log(status)
+
                     if (status === 'complete') {
                       let tmpPath = [];
                       const steps = result.routes[0].steps;
@@ -430,7 +434,7 @@ export default {
                         tmpPath = tmpPath.concat(steps[i].path);
                         instructions.push(steps[i].instruction)
                       }
-                      console.log(steps)
+
                       bus_route_mid.setPath(tmpPath)
                       bus_route_mid.setMap(map.value);
                       navigationOverlay.value.addOverlay(bus_route_mid)
@@ -469,7 +473,7 @@ export default {
           return (minRecord.distance < record.distance) ? minRecord : record;
         });
         // 比较传入的三个值
-        console.log(minDistanceRecord.station)
+
         const bus_route_start = new amap.value.Polyline({
           strokeOpacity:1,
           strokeWeight: 6,
@@ -805,7 +809,7 @@ export default {
           map.value.on('click',function(e) {
             if (navigationFlag.value) {
               const lnglat = e.lnglat;
-              console.log('点击了地图，坐标为：' + lnglat.getLng() + ',' + lnglat.getLat());
+              //console.log('点击了地图，坐标为：' + lnglat.getLng() + ',' + lnglat.getLat());
               if(chooseStartFlag.value){
                 start.value = lnglat;
                 SideBarRef.value.setStart(start.value);
@@ -993,7 +997,7 @@ export default {
                 waypoints1.push(line1Markers[i].getPosition());
               }
 
-              console.log(waypoints1[0])
+
               driving.search([114.002467,22.607841], [113.995249,22.600512], {waypoints: waypoints1},function(status, result) {
                 if (status === 'complete') {
 
@@ -1092,6 +1096,7 @@ export default {
 
 
     return {
+      user,
       SideBarRef,
       start,
       end,
