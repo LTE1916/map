@@ -13,7 +13,7 @@
         >
           <el-sub-menu v-for="(building, index) in buildings" :key="index" :index="index + 1">
             <template #title>
-              <span >{{ building.name}}</span>
+              <span>{{ building.name }}</span>
             </template>
             <el-menu-item
                 v-for="floor in getFloors(building.floorNumber)"
@@ -38,26 +38,36 @@
     <div class="content">
       <div>
         <template v-if="selectedFloor">
-          <!-- FullCalendar 组件 -->
           <FullCalendar :options="this.calendarOptions" ref="calendarRef" class="custom-calendar"/>
-
           <el-dialog
               v-model="dialogVisible"
-              title="Tips"
-              width="30%"
+              title="教室预订"
+              width="50%"
+              class="custom-dialog"
           >
-            <span>This is a message</span>
+            <el-form :model="reservation" label-position="top">
+              <el-form-item label="当前建筑">
+                <span>{{ selectedBuilding ? selectedBuilding.name : '-' }}</span>
+              </el-form-item>
+              <el-form-item label="当前楼层">
+                <span>{{ selectedFloor ? selectedFloor : '-' }}</span>
+              </el-form-item>
+              <el-form-item label="当前房间号">
+                <span>{{ selectedRoomName ? selectedRoomName : '-' }}</span>
+              </el-form-item>
+              <el-form-item label="预约时间">
+                <span>{{ formatReservationTime(selectedTimeRange) }}</span>
+              </el-form-item>
+            </el-form>
             <template #footer>
             <span class="dialog-footer">
               <el-button @click="dialogVisible = false">Cancel</el-button>
-              <el-button type="primary" @click="dialogVisible = false">
+              <el-button type="primary" @click="confirmReservation">
                 Confirm
               </el-button>
             </span>
             </template>
-
           </el-dialog>
-
         </template>
       </div>
     </div>
@@ -86,29 +96,35 @@ export default {
       selectedRoomName: '',
       selectedTimeRange: [null, null],
       dialogVisible: false,
-      reservation:{},
+      reservation: {},
+      user: {},
       buildings: [],
-      roomsPerFloor: 9,
       calendarRef: null,
       calendarOptions: {
         licenseKey: 'GPL-My-Project-Is-Open-Source',
         plugins: [dayGridPlugin, resourceTimelinePlugin, interactionPlugin],
         initialView: 'resourceTimelineDay',
         slotMinTime: '08:00:00',
-        slotMaxTime: '22:00:00',
+        slotMaxTime: '24:00:00',
         height: '700px',
         resources: [],
         events: [],
-        selectable: true,
+        selectable: {
+          time: true,
+          select: this.handleTimeRangeSelect,
+        },
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
           right: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
         },
         views: {
-          resourceTimelineDay: { buttonText: 'Day' },
-          resourceTimelineWeek: { buttonText: 'Week' },
-          resourceTimelineMonth: { buttonText: 'Month' },
+          resourceTimelineDay: {buttonText: 'Day'},
+          resourceTimelineWeek: {buttonText: 'Week'},
+          resourceTimelineMonth: {buttonText: 'Month'},
+        },
+        datesSet: (info) => {
+          this.disablePrevButton(info);
         },
       },
 
@@ -118,7 +134,60 @@ export default {
     this.loadData()
   },
   methods: {
+    disablePrevButton(info) {
+      const currentDate = new Date();
+      const calendarStartDate = info.start;
+      const prevButton = document.querySelector('.fc-prev-button');
+
+      if (prevButton) {
+        prevButton.disabled = calendarStartDate <= currentDate;
+      }
+    },
+    formatReservationTime(timeRange) {
+      const start = this.formatTime(timeRange[0]);
+      const end = this.formatTime(timeRange[1]);
+      return `${this.formatDay(timeRange[0])}：${start}-${end}`;
+    },
+
+    formatDay(date) {
+      const options = {weekday: 'short'};
+      return new Intl.DateTimeFormat('en-US', options).format(date);
+    },
+
+    formatTime(date) {
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+      });
+    },
+    confirmReservation() {
+      this.$request.post('/booking-info', {
+        username: this.user.username,
+        startTime: this.formatTimeForBackend(this.selectedTimeRange[0]),
+        endTime: this.formatTimeForBackend(this.selectedTimeRange[1]),
+        classroom: this.selectedRoomName,
+        building: this.selectedBuilding.name,
+        floor: this.selectedFloor,
+      }).then((response) => {
+        if (response.code === '200') {
+          this.$message.success('预约提交成功');
+          this.updateFullCalendar(this.selectedBuilding,this.selectedFloor);
+          this.dialogVisible = false;
+        } else {
+          this.$message.error('预约提交失败');
+        }
+      }).catch((error) => {
+        console.error('提交预约时发生错误:', error);
+        this.$message.error('提交预约时发生错误');
+      });
+    },
+    formatTimeForBackend(time) {
+      const utcTime = new Date(time.getTime() - time.getTimezoneOffset() * 60000);
+      return utcTime.toISOString();
+    },
     loadData() {
+      this.user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : {}
       this.$request.get('/booking-info/building').then((res) => {
         if (res.code === "200") {
           this.buildings = res.data
@@ -129,16 +198,6 @@ export default {
         }
       })
     },
-    // loadAllEvent(){
-    //   this.$request.get('/booking-info/all').then((res)=>{
-    //     if (res.code ==="200"){
-    //       const events = res.data;
-    //
-    //     }else{
-    //       console.error("all")
-    //     }
-    //   })
-    // },
     loadClassroom(building, floor) {
       return this.$request.get(`/classroom/searchFloor?building=${building}&floor=${floor}`).then((res) => {
         if (res.code === "200") {
@@ -147,6 +206,7 @@ export default {
             id: classroom.id,
             title: classroom.name
           }));
+          console.log(classrooms)
           return classrooms;
         } else {
           console.error("fail");
@@ -158,17 +218,18 @@ export default {
       });
     },
 
-    async loadCurEvents(classrooms){
+    async loadCurEvents(classrooms) {
       for (const classroom of classrooms) {
         try {
           // 发送 POST 请求
-          this.$request.post('/booking-info/Room', classroom).then((response)=>{
+          this.$request.post('/booking-info/Room', classroom).then((response) => {
             const classroomEvents = response.data;
             for (const booking of classroomEvents) {
               const event = {
                 resourceId: classroom.id,
                 start: booking.startTime,
                 end: booking.endTime,
+                username: booking.username,
                 backgroundColor: 'green'
               };
               console.log(event);
@@ -181,45 +242,79 @@ export default {
         }
       }
     },
-    selectFloor(building,floor) {
+    selectFloor(building, floor) {
+      this.selectedBuilding = building;
       this.selectedFloor = floor;
       console.log(this.selectedFloor)
-      this.updateFullCalendar(building,floor);
+      this.updateFullCalendar(building, floor);
     },
     handleTimeRangeSelect(info) {
-      console.log("Info:", info);
-      if (
-          info &&
-          info.start &&
-          info.end &&
-          typeof info.start.getHours === 'function' &&
-          typeof info.end.getHours === 'function'
-      ) {
-        this.selectedRoomName = `Room ${info.resource.id}`;
-        this.selectedTimeRange = [info.start, info.end];
-        this.dialogVisible = true;
-        console.log(info)
+      if (info && info.start && info.end && typeof info.start.getHours === 'function' && typeof info.end.getHours === 'function' && info.start > new Date()) {
+        const isOverlap = this.isTimeRangeOverlap(info.start, info.end, info);
+
+        if (!isOverlap) {
+          this.selectedRoomName = info.resource.title;
+          this.selectedTimeRange = [info.start, info.end];
+          this.dialogVisible = true;
+        } else {
+          this.$message.error('所选时间段已被预约或有重叠，请重新选择');
+        }
       } else {
         console.error("Invalid or missing information for time range selection");
       }
+    },
+    isTimeRangeOverlap(newStartTime, newEndTime, info) {
+      const events = this.calendarOptions.events;
+      const currentUser = this.user.username; // 获取当前用户的用户名
+      console.log(newEndTime);
+      console.log(newStartTime);
+      for (const event of events) {
+        const eventStartTime = new Date(event.start);
+        const eventEndTime = new Date(event.end);
+        console.log(eventStartTime);
+        console.log(eventEndTime);
+        if(event.resourceId === info.resource.id && ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
+            (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
+            (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))
+        {
+          return true;
+        }
+        if (
+            ((event.resourceId === info.resource.id && event.username !== currentUser) &&
+                ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
+                    (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
+                    (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))||
+            ((event.resourceId === info.resource.id && event.username === currentUser) &&
+                ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
+                    (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
+                    (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))||
+            ((event.resourceId !== info.resource.id && event.username === currentUser) &&
+                ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
+                    (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
+                    (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))
+        ) {
+          return true;
+        }
+      }
+      return false;
     },
     closeDialog() {
       this.dialogVisible = false;
     },
     getFloors(floor) {
       console.log(floor)
-      console.log(Array.from({ length: floor }, (_, i) => i + 1))
-      return Array.from({ length: floor }, (_, i) => i + 1);
+      console.log(Array.from({length: floor}, (_, i) => i + 1))
+      return Array.from({length: floor}, (_, i) => i + 1);
     },
     updateFullCalendar(building, floor) {
       console.log("updateFull")
+      this.calendarOptions.events = [];
       this.loadClassroom(building.name, floor).then(classrooms => {
         this.loadCurEvents(classrooms)
       }).catch(error => {
         console.error('Error loading classrooms:', error);
       });
     }
-
   },
   mounted() {
     this.calendarOptions.select = this.handleTimeRangeSelect;
@@ -232,15 +327,12 @@ export default {
 };
 </script>
 
-
-
 <style>
 .container {
   display: flex;
   justify-content: space-between;
   padding: 20px;
-  background-image: url('@/assets/1.jpg');
-  background-size: cover;
+  background: linear-gradient(to right, var(--el-color-primary-light-8), #BC8F8F);
   min-height: 94vh;
 }
 
@@ -257,5 +349,8 @@ export default {
   background-color: #fff;
 }
 
+.custom-dialog {
+  border-radius: 10px;
+}
 </style>
 
