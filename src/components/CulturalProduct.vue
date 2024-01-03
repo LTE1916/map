@@ -1,5 +1,6 @@
 <template>
   <div id="product">
+    <!-- 左侧菜单部分 -->
     <div class="sidebar">
       <h2>文创购买</h2>
       <ul>
@@ -12,6 +13,7 @@
         <button @click="checkout">付款</button>
       </div>
 
+      <!-- 购物车弹窗部分 -->
       <teleport to="body">
         <el-dialog v-model="cartDialogVisible" title="购物车">
           <div v-if="cart.length > 0">
@@ -27,12 +29,13 @@
       </teleport>
     </div>
 
+    <!-- 右侧内容部分 -->
     <div class="main-content">
       <div v-if="selectedProduct">
-        <h2>{{ selectedProduct.name }}</h2>
+        <h2>{{ selectedProduct.type }}</h2>
         <div class="menu">
           <div v-for="item in selectedProduct.menu" :key="item.id" class="menu-item">
-            <img src='@/assets/2.jpg' alt="文创照片">
+            <img :src="item.photoUrl" alt="文创照片">
             <div class="item-details">
               <h3>{{ item.name }}</h3>
               <p>{{ item.price }} 元</p>
@@ -51,111 +54,106 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import 'element-plus/dist/index.css'
-import { ElDialog } from 'element-plus';
-
 export default {
-  components: {
-    ElDialog,
-  },
-  setup() {
-    const products = ref([
-      {
-        id: 1,
-        name: '衣物类',
-        menu: [
-          { id: 1, name: '文化衫1', price: 100, image: '@/assets/1.jpg' },
-          { id: 2, name: '文化衫2', price: 100, image: 'path/to/imageA2.jpg' },
-        ],
-      },
-      {
-        id: 2,
-        name: '装饰类',
-        menu: [
-          { id: 3, name: '书签', price: 12, image: 'path/to/imageB1.jpg' },
-          { id: 4, name: '钥匙环', price: 5, image: 'path/to/imageB2.jpg' },
-        ],
-      },
-      {
-        id: 3,
-        name: '文具类',
-        menu: [
-          { id: 5, name: '笔', price: 2, image: 'path/to/imageB1.jpg' },
-          { id: 6, name: '笔记本', price: 15, image: 'path/to/imageB2.jpg' },
-        ],
-      },
-    ]);
-    const selectedProduct = ref(null);
-    const cart = ref([]);
-    const cartDialogVisible = ref(false);
-
-    const selectProduct = (product) => {
-      selectedProduct.value = product;
+  data() {
+    return {
+      products: [],
+      selectedProduct: null,
+      cart: [],
+      cartDialogVisible: false,
     };
+  },
+  created() {
+    this.loadData()
+  },
+  methods: {
+    loadData() {
+      this.$request.get('/product')
+          .then((res) => {
+            if (res.code === "200" && res.data) {
+              this.products = this.transformData(res.data);
+              console.log("产品数据已加载:", this.products);
+            } else {
+              console.error("加载产品数据时出错:", res);
+            }
+          })
+          .catch((error) => {
+            console.error("发起请求时出错:", error);
+          });
+    },
+    transformData(data) {
+      const transformedData = {};
 
-    const decreaseQuantity = (item) => {
-      const cartItem = getCartItem(item);
+      data.forEach(item => {
+        if (!transformedData[item.type]) {
+          transformedData[item.type] = [];
+        }
+        transformedData[item.type].push({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          photoUrl: item.photoUrl,
+        });
+      });
+
+      return Object.keys(transformedData).map(type => ({
+        id: type,
+        name: type,
+        menu: transformedData[type],
+      }));
+    },
+    selectProduct(product) {
+      this.selectedProduct = product;
+    },
+    decreaseQuantity(item) {
+      const cartItem = this.getCartItem(item);
       if (cartItem && cartItem.quantity > 0) {
         cartItem.quantity--;
       }
-    };
+    },
 
-    const increaseQuantity = (item) => {
-      const cartItem = getCartItem(item);
+    increaseQuantity(item) {
+      const cartItem = this.getCartItem(item);
       if (cartItem) {
         cartItem.quantity++;
       } else {
-        addToCart(item);
+        this.addToCart(item);
       }
-    };
+    },
 
-    const viewCart = () => {
-      cartDialogVisible.value = true;
+    addToCart(item) {
+      const existingCartItem = this.getCartItem(item);
+
+      if (existingCartItem) {
+        existingCartItem.quantity++;
+      } else {
+        this.cart.push({
+          id: item.id,
+          quantity: 1,
+          name: item.name,
+          price: item.price,
+        });
+      }
+    },
+    viewCart() {
+      this.cartDialogVisible = true;
       console.log("查看购物车");
-    };
-
-    const checkout = () => {
+    },
+    checkout() {
       console.log("付款");
-    };
-
-    const getCartItem = (item) => {
-      return cart.value.find(cartItem => cartItem.id === item.id);
-    };
-
-    const getCartItemQuantity = (item) => {
-      const cartItem = getCartItem(item);
+    },
+    getCartItem(item) {
+      return this.cart.find(cartItem => cartItem.id === item.id);
+    },
+    getCartItemQuantity(item) {
+      const cartItem = this.getCartItem(item);
       return cartItem ? cartItem.quantity : 0;
-    };
-
-    const addToCart = (item) => {
-      cart.value.push({
-        id: item.id,
-        quantity: 1,
-        name: item.name,
-        price: item.price,
-      });
-    };
-
-    const calculateTotalPrice = () => {
-      return cart.value.reduce((total, cartItem) => {
+    },
+    calculateTotalPrice() {
+      return this.cart.reduce((total, cartItem) => {
         return total + cartItem.quantity * cartItem.price;
       }, 0);
-    };
-
-    return {
-      products,
-      selectedProduct,
-      cart,
-      cartDialogVisible,
-      selectProduct,
-      decreaseQuantity,
-      increaseQuantity,
-      viewCart,
-      checkout,
-      getCartItemQuantity,
-      calculateTotalPrice,
-    };
+    },
   },
 };
 </script>
@@ -163,12 +161,7 @@ export default {
 <style>
 #product {
   display: flex;
-  height: 100vh;
-  width: 100%;
-  background-image: url('@/assets/1.jpg'); /* 替换为你的图片路径 */
-  background-size: cover; /* 使背景图片覆盖整个容器 */
-  background-position: center; /* 使背景图片居中 */
-  background-repeat: no-repeat; /* 防止图片重复 */
+  background: linear-gradient(to right, var(--el-color-primary-light-8), #BC8F8F);
 }
 
 .sidebar {
@@ -230,7 +223,7 @@ export default {
   flex-direction: column;
   margin-bottom: 20px;
   margin-right: 20px;
-  background-color: #fff;
+  background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 5px;
   overflow: hidden;
@@ -257,7 +250,7 @@ export default {
 
 button {
   cursor: pointer;
-  background-color: #4caf50;
+  background-color: var(--el-color-primary-light-8);
   color: #fff;
   border: none;
   padding: 8px;
@@ -266,12 +259,12 @@ button {
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: var(--el-color-primary-light-8);
 }
 
 .select-message {
   font-size: 1.2em;
-  color: #888;
+  color: #333333;
 }
 
 .quantity-control {
@@ -282,7 +275,7 @@ button:hover {
 
 .quantity-btn {
   cursor: pointer;
-  background-color: #4caf50;
+  background-color: #BC8F8F;
   color: #fff;
   border: none;
   padding: 8px;
@@ -291,7 +284,7 @@ button:hover {
 }
 
 .quantity-btn:hover {
-  background-color: #45a049;
+  background-color: #BC8F8F;
 }
 
 .quantity-number {
@@ -306,7 +299,7 @@ button:hover {
 
 .payment-bar button {
   cursor: pointer;
-  background-color: #4caf50;
+  background-color: #BC8F8F;
   color: #fff;
   border: none;
   padding: 10px 20px;
@@ -316,6 +309,6 @@ button:hover {
 }
 
 .payment-bar button:hover {
-  background-color: #45a049;
+  background-color: #BC8F8F;
 }
 </style>

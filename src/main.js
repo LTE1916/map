@@ -11,4 +11,34 @@ app.use(ElementPlus);
 app.use(router);
 app.use(requestPlugin)
 app.use(v3Directives)
+app.config.globalProperties.$global = {
+  user: {
+    authority: "GUEST",
+    avatarUrl: "",
+    id: 0,
+    login: true,
+    password: "",
+    token: "",
+    username: "guest"
+  },
+  getUser() {
+    return this.user
+  },
+  setUser(user) {
+    this.user = user
+  },
+  resetUser() {
+    this.user = {
+      authority: "GUEST",
+      avatarUrl: "",
+      id: 0,
+      login: true,
+      password: "",
+      token: "",
+      username: "guest"
+    }
+  }
+}
+
+
 app.mount('#app');

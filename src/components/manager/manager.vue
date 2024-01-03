@@ -23,6 +23,12 @@ export default {
     handleBack() {
       this.$router.push('/map')
     },
+    handleBooking(){
+      this.$router.push('/bookingInfo')
+    },
+    handleProduct(){
+      this.$router.push('/productUpload')
+    },
     handleLogout() {
       if (this.user!=null){
         this.$request.post('/user/logout', this.user).then((res) => {
@@ -45,7 +51,7 @@ export default {
   <el-container class="layout-container-demo" >
     <el-header style="display: flex;justify-content: space-between; font-size: 20px">
       <!-- 左边容器，只包含 logo -->
-      <div>
+      <div style="position: relative;">
         <img
             style="width: 600px; height: 100%;"
             src="../../assets/LOGO1.png"
@@ -53,9 +59,11 @@ export default {
         />
       </div>
 
-      <div>
-        <h1 style="font-family: '黑体',serif; line-height: 180px; color: black; margin-left: -600px;">用户管理系统</h1>
+      <div style="position: absolute; left: 600px; top: 0;">
+        <h1 style="font-family: '黑体',serif; line-height: 180px; color: black;">用户管理系统</h1>
       </div>
+
+
       <!-- 右边容器，包含下拉菜单和用户名 -->
       <div class="toolbar">
         <el-dropdown>
@@ -98,6 +106,22 @@ export default {
                   <message/>
                 </el-icon>
                 <span class="menu-item-text">批注册及黑名单设置</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="4" @click="handleBooking()">
+              <template #title>
+                <el-icon>
+                  <message/>
+                </el-icon>
+                <span class="menu-item-text">教室预约管理</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="5" @click="handleProduct()">
+              <template #title>
+                <el-icon>
+                  <message/>
+                </el-icon>
+                <span class="menu-item-text">文创管理</span>
               </template>
             </el-menu-item>
           </el-menu>

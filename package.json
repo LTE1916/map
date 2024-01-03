@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "push": " npm run build&& scp -r dist/* root@8.138.110.138:/usr/local/nginx/html"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

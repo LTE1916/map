@@ -52,18 +52,23 @@ const routes = [
                 path: '/misc',
                 name:'misc',
                 component:()=>import('../components/manager/misc.vue')
-            }
+            },
+            {
+                path: '/bookingInfo',
+                name:'BookingInfo',
+                component:()=>import('../components/manager/booking-info.vue')
+            },
+            {
+                path: '/productUpload',
+                name:'ProductUpload',
+                component:()=>import('../components/manager/ProductUpload.vue')
+            },
         ]
     },
     {
         path:'/calendar',
         name:'calendar',
         component:()=>import('../components/CalenDar.vue')
-    },
-    {
-        path: '/bookingInfo',
-        name:'BookingInfo',
-        component:()=>import('../components/booking-info.vue')
     }
     // ...其他路由
 ];

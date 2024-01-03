@@ -52,18 +52,27 @@
     </div>
   </div>
 
-  <el-menu class = "custom-menu-container" mode="horizontal" text-color="#ffffff" active-text-color="#ffd04b"
-           background-color="transparent ">
+  <el-menu class = "custom-menu-container" mode="horizontal" text-color="#ffffff" active-text-color="#ffd04b">
     <el-button :icon="House"  class="custom-button" @click="navigateTo('0')" >主页</el-button>
     <el-button :icon="ChatLineSquare" class="custom-button" @click="navigateTo('1')">论坛</el-button>
+
     <el-button :icon="Timer" class="custom-button" @click="navigateTo('2')"
                v-if="user && (user.authority === 'USER' || user.authority === 'ADMIN')">教室预定</el-button>
+
     <el-button :icon="ShoppingCart" class="custom-button" @click="navigateTo('3')"
                v-if="user && (user.authority === 'USER' || user.authority === 'ADMIN')"> 文创购物 </el-button>
+
     <el-button :icon="Van" class="custom-button" @click="navigateTo('4')"> 公交站点 </el-button>
     <el-button :icon="Search" class="custom-button" @click="navigateTo('5')"> 导航 </el-button>
     <el-button :icon="ArrowLeft" round >test button</el-button>
+
   </el-menu>
+  <div class="logout-button">
+    <el-button :icon="User" class="custom-button" @click="logout" position="right"
+               v-if="user && (user.authority === 'USER' || user.authority === 'ADMIN')">退出登录</el-button>
+    <el-button :icon="User" class="custom-button" @click="goToLogin" position="right"
+               v-if="!(user && (user.authority === 'USER' || user.authority === 'ADMIN'))">登录</el-button>
+  </div>
 
 </template>
 
@@ -76,7 +85,8 @@ import {ElButton, ElPopover, ElUpload } from 'element-plus';
 import 'element-plus/dist/index.css'
 
 import {getCurrentInstance, onMounted, ref,} from "vue";
-import {House,ChatLineSquare,Timer,ShoppingCart,Search,ArrowLeft,Van} from "@element-plus/icons-vue";
+import {House,ChatLineSquare,Timer,ShoppingCart,Search,ArrowLeft,Van,User} from "@element-plus/icons-vue";
+
 export default {
   components: {
     Sidebar,
@@ -87,8 +97,13 @@ export default {
   },
 
   setup(){
-    const user = JSON.parse(localStorage.getItem("user"));
-    console.log(user,user.authority,user.username)
+    const { proxy } = getCurrentInstance();
+    const instance = getCurrentInstance()
+    const global = instance.appContext.config.globalProperties.$global//先确定用户及权限
+    let user = JSON.parse(localStorage.getItem("user"));
+
+    global.setUser(user);
+    user =  global.user;
     const map = ref(null);
     const amap = ref(null)
 
@@ -198,11 +213,10 @@ export default {
     const COEN = ref(null)
     const COES = ref(null)
     const SideBarRef = ref(null);
-    const { proxy } = getCurrentInstance();
-    const instance = getCurrentInstance()
+
     // 访问全局插件
     const request = instance.appContext.config.globalProperties.$request
-
+    const router = instance.appContext.config.globalProperties.$router
     async function fetchStartEndStation() {
 
       while (startStation.value === null || endStation.value === null) {
@@ -227,6 +241,29 @@ export default {
       }
     }
     //异步函数获取公交导航的站点
+
+
+    const goToLogin = () => {
+      router.push("/login")
+    };
+    const logout = () => {
+      //const curUser = localStorage.getItem("user");
+      request.post("/user/logout", user).then(res => {
+        if (res.code === '200') {
+          console.log('logout 200ok')
+         //删除用户信息到浏览器
+          localStorage.removeItem("user");
+          global.resetUser();
+          router.push("/login")
+          //this.$message.success("login success")
+        }
+      }).catch((err)=>{
+        console.log(err)
+      })
+
+
+      //router.push("/login")
+    };
     const navigateTo = (index) => {
 
       switch (index) {
@@ -237,9 +274,12 @@ export default {
           // window.location.href = 'http://
           break;
         case '2':
+          //教室预定
+          router.push("/calendar")
           // window.location.href = 'http://
           break;
         case '3':
+          router.push("/product")
           //  window.location.href = 'http://
           break;
         case '4':
@@ -753,7 +793,8 @@ export default {
               map.value.addControl(new AMap.Scale()); // 显示当前地图中心的比例尺
               map.value.addControl(new AMap.HawkEye()); // 显示缩略图
               map.value.addControl(new AMap.Geolocation()); // 定位当前位置
-              map.value.addControl(new AMap.MapType()); // 实现默认图层与卫星图,实时交通图层之间切换
+
+
               });
           map.value.on('movestart', () => {
             const zoom = map.value.getZoom(); // 获取当前地图的缩放级别
@@ -1103,6 +1144,8 @@ export default {
       buildingOverlay,
       busStationOverlay,
       navigationOverlay,
+      goToLogin,
+      logout,
       handleNavigation,
       confirmNavigation,
       updateMenu,
@@ -1130,7 +1173,7 @@ export default {
       activeSidebar,
       navigateTo,
       showBusStationMarkers,
-      ArrowLeft, House,ChatLineSquare,Timer,ShoppingCart,Search,Van
+      ArrowLeft, House,ChatLineSquare,Timer,ShoppingCart,Search,Van,User
     };
   },
 
@@ -1193,5 +1236,10 @@ export default {
 .sidebar {
   z-index: 999; /* 设置一个较高的z-index值，以确保sidebar显示在最上层 */
 }
+.logout-button {
+  position: absolute;
+  right: 20px;
+  top: 20px;
 
+}
 </style>

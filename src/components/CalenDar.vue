@@ -1,5 +1,12 @@
 <template>
-  <div class="container">
+  <el-alert
+      v-model="alertVisible"
+      title="无权限"
+      type="error"
+      description="返回登录界面，请重新登录"
+      show-icon
+  />
+  <div class="container" v-show="pageVisible">
     <el-row class="tac">
       <el-col :span="24">
         <h1 class="mb-2" style="font-weight: bold; font-size: 30px; text-align: center;">教室预订</h1>
@@ -71,6 +78,8 @@
         </template>
       </div>
     </div>
+
+
   </div>
 </template>
 
@@ -96,6 +105,8 @@ export default {
       selectedRoomName: '',
       selectedTimeRange: [null, null],
       dialogVisible: false,
+      alertVisible: false,
+      pageVisible: true,
       reservation: {},
       user: {},
       buildings: [],
@@ -131,6 +142,17 @@ export default {
     };
   },
   created() {
+
+    const user = this.$global.user
+    if (user.authority !== 'USER'&& user.authority !== 'ADMIN') {
+      this.alertVisible = true;
+      this.pageVisible = false;
+      setTimeout(() => {
+        // 在等待2秒后执行的逻辑
+        this.$router.push('/login');
+      }, 2000);
+
+    }
     this.loadData()
   },
   methods: {
