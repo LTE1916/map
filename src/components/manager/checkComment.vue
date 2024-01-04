@@ -47,9 +47,9 @@ export default {
     },
     pass(item) {
       item.checked = true;
-      this.$request.post("/comment", item).then(res => {
+      this.$request.delete("/comment", item).then(res => {
         if (res.code === '200') {
-          this.$message.success("通过成功")
+          this.$message.success("删除成功")
           this.detailVisible = false
         } else {
           this.$message.error(res.msg)
@@ -57,8 +57,14 @@ export default {
       })
     },
     fail(item) {
-      console.log(item)
-
+      this.$request.delete("/comment", item).then(res => {
+        if (res.code === '200') {
+          this.$message.success("通过成功")
+          this.detailVisible = false
+        } else {
+          this.$message.error(res.msg)
+        }
+      })
     },
     formattedDate(originalDate) {
       return dayjs(originalDate).format('YYYY年MM月DD日 HH:mm:ss');

@@ -1,4 +1,3 @@
-
 <template>
   <el-alert
       v-show="alertVisible"
@@ -7,7 +6,7 @@
       description="返回登录界面，请重新登录"
       show-icon
   />
-  <div  v-show="pageVisible">
+  <div v-show="pageVisible">
     <el-input
         v-model="search.username"
         placeholder="按用户名搜索"
@@ -41,6 +40,7 @@
       <el-table-column prop="id" label="ID" width="60"></el-table-column>
       <el-table-column prop="username" label="用户名" width="100"></el-table-column>
       <el-table-column prop="startTime" label="开始时间" width="200"></el-table-column>
+      <el-table-column prop="classroomId" label="教室编号" width="200"></el-table-column>
       <el-table-column prop="endTime" label="结束时间" width="200"></el-table-column>
       <el-table-column prop="classroom" label="教室" width="100"></el-table-column>
       <el-table-column prop="building" label="建筑" width="100"></el-table-column>
@@ -63,15 +63,16 @@
         <el-form-item label="结束时间">
           <el-input v-model="currentEditBooking.endTime"></el-input>
         </el-form-item>
-        <el-form-item label="教室">
-          <el-input v-model="currentEditBooking.classroom"></el-input>
-        </el-form-item>
-        <el-form-item label="建筑">
-          <el-input v-model="currentEditBooking.building"></el-input>
-        </el-form-item>
-        <el-form-item label="楼层">
-          <el-input v-model="currentEditBooking.floor"></el-input>
-        </el-form-item>
+
+<!--        <el-form-item label="教室">-->
+<!--          <el-input v-model="currentEditBooking.classroom"></el-input>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="建筑">-->
+<!--          <el-input v-model="currentEditBooking.building"></el-input>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="楼层">-->
+<!--          <el-input v-model="currentEditBooking.floor"></el-input>-->
+<!--        </el-form-item>-->
       </el-form>
       <template v-slot:footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
@@ -113,9 +114,7 @@ export default {
         username: '',
         startTime: '',
         endTime: '',
-        classroom: '',
-        building: '',
-        floor: 0
+        classroomId: 0,
       },
       confirmDialogVisible: false,
       currentDisapproveBooking: null
@@ -123,7 +122,7 @@ export default {
   },
 
   mounted() {
-    if(this.$global.firstLogin){
+    if (this.$global.firstLogin) {
       this.$global.setUser(JSON.parse(localStorage.getItem("user")));
       this.$global.firstLogin = false;
     }
@@ -134,9 +133,9 @@ export default {
       this.pageVisible = false;
       setTimeout(() => {
         // 在等待2秒后执行的逻辑
-        if(this.$global.user.authority === 'GUEST') {
+        if (this.$global.user.authority === 'GUEST') {
           this.$router.push('/login');
-        }else {
+        } else {
           this.$router.push('/map');
         }
       }, 2000);
@@ -155,12 +154,19 @@ export default {
     fetchData() {
       this.$request.post('/booking-info/all', this.search)
           .then(response => {
-            if(response.code === '200') {
+            if (response.code === '200') {
               console.log(this.search);
               console.log(response.data);
               this.bookingData = response.data;
+              for (let i = 0; i < this.bookingData.length; i++) {
+                this.$request.get('/', this.bookingData[i]).then(res => {
+                  this.bookingData[i].building = res.data.building;
+                  this.bookingData[i].classroom = res.data.classroom;
+                  this.bookingData[i].floor = res.data.floor;
+                })
+              }
               console.log('Booking data:', this.bookingData);
-            }else {
+            } else {
               console.log('Fetch error:', response.data.msg);
             }
           })
@@ -173,17 +179,17 @@ export default {
       this.fetchData()
     },
     openEditDialog(booking) {
-      this.currentEditBooking = { ...booking };
+      this.currentEditBooking = {...booking};
       this.editDialogVisible = true;
     },
     submitEditBooking() {
       this.$request.post('/booking-info', this.currentEditBooking)
           .then(response => {
-            if(response.code === '200'){
+            if (response.code === '200') {
               console.log('Edit successful:', response);
               this.editDialogVisible = false;
               this.fetchData();
-            }else {
+            } else {
               console.log('Edit error:', response.data.msg);
             }
           })
@@ -197,21 +203,22 @@ export default {
     },
     handleCloseConfirmDialog(done) {
       this.$confirm('确认关闭？')
-          .then(()=> {
+          .then(() => {
             done();
           })
-          .catch(()=> {});
+          .catch(() => {
+          });
     },
     deleteBooking() {
       if (!this.currentDisapproveBooking) return;
       const id = this.currentDisapproveBooking.id;
       this.$request.delete(`/booking-info/${id}`)
           .then(response => {
-            if(response.code === '200'){
+            if (response.code === '200') {
               console.log('Delete successful:', response);
               this.confirmDialogVisible = false;
               this.fetchData();
-            }else {
+            } else {
               console.log('Delete error:', response.data.msg);
             }
           })

@@ -24,10 +24,8 @@
             </el-menu-item>
           </el-sub-menu>
 
+
           <el-menu-item index="4">
-            <span>统计数据</span>
-          </el-menu-item>
-          <el-menu-item index="5">
             <span>我的预约</span>
           </el-menu-item>
 
@@ -94,7 +92,7 @@ export default {
       selectedBuilding: null,
       selectedFloor: null,
       selectedRoomName: '',
-      selectedClassroomId:0,
+      selectedClassroomId: 0,
       selectedTimeRange: [null, null],
       dialogVisible: false,
       reservation: {},
@@ -163,18 +161,17 @@ export default {
       });
     },
     confirmReservation() {
-      this.$request.post('/booking-info', {
+      const dto = {
         username: this.user.username,
         startTime: this.formatTimeForBackend(this.selectedTimeRange[0]),
         endTime: this.formatTimeForBackend(this.selectedTimeRange[1]),
-        classroomId:this.selectedClassroomId,
-        // classroom: this.selectedRoomName,
-        // building: this.selectedBuilding.name,
-        // floor: this.selectedFloor,
-      }).then((response) => {
+        classroomId: this.selectedClassroomId,
+      }
+      console.log(dto)
+      this.$request.post('/booking-info', dto).then((response) => {
         if (response.code === '200') {
           this.$message.success('预约提交成功');
-          this.updateFullCalendar(this.selectedBuilding,this.selectedFloor);
+          this.updateFullCalendar(this.selectedBuilding, this.selectedFloor);
           this.dialogVisible = false;
         } else {
           this.$message.error('预约提交失败');
@@ -223,7 +220,7 @@ export default {
       for (const classroom of classrooms) {
         try {
           // 发送 POST 请求
-          this.$request.post('/booking-info/Room', classroom).then((response) => {
+          this.$request.post('/booking-info/Room', {classroomId: classroom.id}).then((response) => {
             const classroomEvents = response.data;
             for (const booking of classroomEvents) {
               const event = {
@@ -273,21 +270,20 @@ export default {
         const eventEndTime = new Date(event.end);
         console.log(eventStartTime);
         console.log(eventEndTime);
-        if(event.resourceId === info.resource.id && ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
+        if (event.resourceId === info.resource.id && ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
             (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
-            (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))
-        {
+            (newStartTime <= eventStartTime && newEndTime >= eventEndTime))) {
           return true;
         }
         if (
             ((event.resourceId === info.resource.id && event.username !== currentUser) &&
-            ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
-                (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
-                (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))||
+                ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
+                    (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
+                    (newStartTime <= eventStartTime && newEndTime >= eventEndTime))) ||
             ((event.resourceId === info.resource.id && event.username === currentUser) &&
                 ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
                     (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
-                    (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))||
+                    (newStartTime <= eventStartTime && newEndTime >= eventEndTime))) ||
             ((event.resourceId !== info.resource.id && event.username === currentUser) &&
                 ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
                     (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||

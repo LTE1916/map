@@ -17,6 +17,9 @@
           <el-form-item>
             <el-button v-if="role === 'user'" @click="registerUser">Register</el-button>
           </el-form-item>
+          <el-form-item>
+            <el-button @click="goToLogin">返回登录</el-button>
+          </el-form-item>
         </div>
       </el-form>
 
@@ -48,6 +51,9 @@ export default {
     };
   },
   methods: {
+    goToLogin() {
+      this.$router.push("/login"); // 使用路由跳转到登录页面
+    },
     registerUser() {
       // Implement register logic based on the selected role
       if (this.role === 'user' || this.role === 'admin') {
@@ -90,7 +96,7 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100vh; /* 使容器占据整个视窗高度 */
-  background: url('@/assets/1.jpg') center center/cover no-repeat; /* 替换为你的图片路径 */
+  background: url('@/assets/3.jpeg') center center/cover no-repeat; /* 替换为你的图片路径 */
   font-family: 'Arial', sans-serif;
 }
 
@@ -100,26 +106,30 @@ export default {
   padding: 30px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.5); /* 设置登录表单的背景色，可根据需要调整透明度 */
-  margin-top: 30px;
+  background-color: rgba(255, 255, 255, 0.8); /* 设置登录表单的背景色，可根据需要调整透明度 */
+  margin-top: 30px;backdrop-filter: blur(5px); /* 添加模糊效果，需要浏览器支持 */
+  border: 1px solid #ccc;
 }
 
 h1 {
   font-size: 4em;
   margin-bottom: 20px;
-  color: #fff; /* 设置颜色为白色 */
+  color: #ffffff; /* 设置颜色为深灰色 */
 }
 
 
 label {
   display: block;
   margin-bottom: 8px;
+  font-size: 16px;
+  color: #333;
 }
 
 select {
   width: 100%;
   padding: 8px;
   margin-bottom: 20px;
+  font-size: 14px;
 }
 
 button {
@@ -136,15 +146,14 @@ button {
 button:hover {
   background-color: #2980b9;
 }
+h2 {
+  font-size: 2em;
+  margin-bottom: 15px;
+  color: #333;
+}
+p {
+  color: #666;
+}
 
 /* 添加其他样式以适应你的需求 */
 </style>
-
-
-
-
-
-
-
-
-

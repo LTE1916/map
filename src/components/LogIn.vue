@@ -11,7 +11,7 @@
       </div>
 
       <el-form v-if="role ==='user'||role === 'admin' " ref="userForm" :model="user" :rules="rules">
-        <h2>{{ role === 'user' ? 'User' : 'admin' }} Dashboard</h2>
+        <h2>{{ role === 'user' ? 'User' : 'Admin' }} Dashboard</h2>
         <div v-if="!loggedIn">
           <el-form-item label="Username" prop="username">
             <el-input v-model="user.username" :placeholder="role === 'user' ? 'Enter your username' : 'Enter your admin name'"></el-input>
@@ -64,16 +64,6 @@ export default {
       role: "guest",
       loggedIn: false
     };
-  },
-  created() {
-    console.log(this.$global.user)
-    console.log(this.$global.firstLogin)
-    if (!this.$global.firstLogin) {
-      const userInfo = this.$global.user
-      if (userInfo.authority === 'USER' || userInfo.authority === 'ADMIN') {
-        this.$router.push("/map")
-      }
-    }
   },
   methods: {
     enterGuestMode() {
@@ -142,7 +132,7 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100vh; /* 使容器占据整个视窗高度 */
-  background: url('@/assets/1.jpg') center center/cover no-repeat; /* 替换为你的图片路径 */
+  background: url('@/assets/3.jpeg') center center/cover no-repeat; /* 替换为你的图片路径 */
   font-family: 'Arial', sans-serif;
 }
 
@@ -152,26 +142,30 @@ export default {
   padding: 30px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.5); /* 设置登录表单的背景色，可根据需要调整透明度 */
-  margin-top: 30px;
+  background-color: rgba(255, 255, 255, 0.8); /* 设置登录表单的背景色，可根据需要调整透明度 */
+  margin-top: 30px;backdrop-filter: blur(5px); /* 添加模糊效果，需要浏览器支持 */
+  border: 1px solid #ccc;
 }
 
 h1 {
   font-size: 4em;
   margin-bottom: 20px;
-  color: #fff; /* 设置颜色为白色 */
+  color: #ffffff; /* 设置颜色为深灰色 */
 }
 
 
 label {
   display: block;
   margin-bottom: 8px;
+  font-size: 16px;
+  color: #333;
 }
 
 select {
   width: 100%;
   padding: 8px;
   margin-bottom: 20px;
+  font-size: 14px;
 }
 
 button {
@@ -183,20 +177,19 @@ button {
   border-radius: 5px;
   cursor: pointer;
   margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 button:hover {
   background-color: #2980b9;
 }
-
+h2 {
+  font-size: 2em;
+  margin-bottom: 15px;
+  color: #333;
+}
+p {
+  color: #666;
+}
 /* 添加其他样式以适应你的需求 */
 </style>
-
-
-
-
-
-
-
-
-

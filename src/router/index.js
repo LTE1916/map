@@ -68,6 +68,11 @@ const routes = [
                 name:'Building',
                 component:()=>import('../components/manager/building.vue')
             },
+            {
+                path: '/statisticInfo',
+                name:'StatisticInfo',
+                component:()=>import('../components/manager/StatisticInfo.vue')
+            },
         ]
     },
     {

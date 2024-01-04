@@ -56,6 +56,9 @@ export default {
     handleBuilding(){
       this.$router.push('/building')
     },
+    handleStatisticInfo(){
+      this.$router.push('/StatisticInfo')
+    },
     handleLogout() {
       if (this.user!=null){
         this.$request.post('/user/logout', this.user).then((res) => {
@@ -164,6 +167,14 @@ export default {
                   <message/>
                 </el-icon>
                 <span class="menu-item-text">建筑管理</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="7" @click="handleStatisticInfo()" v-show="itemVisible">
+              <template #title>
+                <el-icon>
+                  <message/>
+                </el-icon>
+                <span class="menu-item-text">统计数据</span>
               </template>
             </el-menu-item>
           </el-menu>
