@@ -50,7 +50,7 @@ export default {
   },
   methods: {
     loadData() {
-      this.$request.post("/booking-info/all")
+      this.$request.get("/booking-info/all")
       .then((response) => {
         if (response.code === "200") {
           this.info = response.data

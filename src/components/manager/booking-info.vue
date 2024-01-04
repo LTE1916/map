@@ -64,15 +64,15 @@
           <el-input v-model="currentEditBooking.endTime"></el-input>
         </el-form-item>
 
-<!--        <el-form-item label="教室">-->
-<!--          <el-input v-model="currentEditBooking.classroom"></el-input>-->
-<!--        </el-form-item>-->
-<!--        <el-form-item label="建筑">-->
-<!--          <el-input v-model="currentEditBooking.building"></el-input>-->
-<!--        </el-form-item>-->
-<!--        <el-form-item label="楼层">-->
-<!--          <el-input v-model="currentEditBooking.floor"></el-input>-->
-<!--        </el-form-item>-->
+        <!--        <el-form-item label="教室">-->
+        <!--          <el-input v-model="currentEditBooking.classroom"></el-input>-->
+        <!--        </el-form-item>-->
+        <!--        <el-form-item label="建筑">-->
+        <!--          <el-input v-model="currentEditBooking.building"></el-input>-->
+        <!--        </el-form-item>-->
+        <!--        <el-form-item label="楼层">-->
+        <!--          <el-input v-model="currentEditBooking.floor"></el-input>-->
+        <!--        </el-form-item>-->
       </el-form>
       <template v-slot:footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
@@ -152,17 +152,21 @@ export default {
       };
     },
     fetchData() {
-      this.$request.post('/booking-info/all', this.search)
+      this.$request.get('/booking-info/all')
           .then(response => {
             if (response.code === '200') {
               console.log(this.search);
               console.log(response.data);
               this.bookingData = response.data;
               for (let i = 0; i < this.bookingData.length; i++) {
-                this.$request.get('/', this.bookingData[i]).then(res => {
-                  this.bookingData[i].building = res.data.building;
-                  this.bookingData[i].classroom = res.data.classroom;
+                this.$request.get(`/classroom/${this.bookingData[i].classroomId}`).then(res => {
+                  // con
+                  // this.bookingData[i].building = res.data.building;
+                  this.bookingData[i].classroom = res.data.name;
                   this.bookingData[i].floor = res.data.floor;
+                  this.$request.get(`/building/searchById/${res.data.buildingId}`).then(res => {
+                    this.bookingData[i].building = res.data.name;
+                  })
                 })
               }
               console.log('Booking data:', this.bookingData);
