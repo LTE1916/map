@@ -61,6 +61,7 @@ export default {
     },
     handleLogout() {
       if (this.user!=null){
+        this.$global.resetUser();
         this.$request.post('/user/logout', this.user).then((res) => {
           if (res.code === "200") {
             console.log("logout successfully")

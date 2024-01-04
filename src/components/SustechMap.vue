@@ -440,6 +440,7 @@ export default {
               for (let i = 1; i < waypointArr.length-1; i++) {
                 waypoint.push([waypointArr[i].longitude, waypointArr[i].latitude]);
               }
+
               const startPosition = [waypointArr[0].longitude,waypointArr[0].latitude];
               const endPosition = [waypointArr[waypointArr.length-1].longitude,waypointArr[waypointArr.length-1].latitude];
 

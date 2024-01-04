@@ -47,10 +47,10 @@ export default {
     },
     pass(item) {
       item.checked = true;
-      this.$request.delete("/comment", item).then(res => {
+      this.$request.post("/comment", item).then(res => {
         if (res.code === '200') {
-          this.$message.success("删除成功")
-          this.detailVisible = false
+          this.$message.success("已通过")
+          this.detailVisible = false;
         } else {
           this.$message.error(res.msg)
         }

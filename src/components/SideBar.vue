@@ -71,7 +71,7 @@
                     <div style="text-align: right; flex: 1">
                       <el-button style="margin-left: 5px" link @click="handleReply(item)" v-if="showComponent">回复</el-button>
                       <el-button link style="color: red" @click="del(item.id)"
-                                 v-if="((user.id === item.userId)&&(this.user.authority === 'USER' || this.user.authority === 'ADMIN'))">删除
+                                 v-if="(((user.id === item.userId)&&(this.user.authority === 'USER')) || this.user.authority === 'ADMIN')">删除
                       </el-button>
                     </div>
                   </div>

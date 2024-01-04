@@ -7,34 +7,6 @@
       show-icon
   />
   <div v-show="pageVisible">
-    <el-input
-        v-model="search.username"
-        placeholder="按用户名搜索"
-        @keyup.enter="fetchData"
-        :style="{ width: '50%', margin: '5px' }"
-    ></el-input>
-    <el-input
-        v-model="search.classroom"
-        placeholder="按教室搜索"
-        @keyup.enter="fetchData"
-        :style="{ width: '50%', margin: '5px' }"
-    ></el-input>
-    <el-input
-        v-model="search.building"
-        placeholder="按建筑搜索"
-        @keyup.enter="fetchData"
-        :style="{ width: '50%', margin: '5px' }"
-    ></el-input>
-    <el-input
-        v-model="search.floor"
-        placeholder="按楼层搜索"
-        @keyup.enter="fetchData"
-        :style="{ width: '50%', margin: '5px' }"
-        type="number"
-    ></el-input>
-    <el-button @click="fetchData" style="margin-left: 5px;">搜索</el-button>
-    <el-button @click="resetSearch" style="margin-left: 10px;">重置</el-button>
-
     <!-- 表格 -->
     <el-table :data="bookingData" style="width: 100%; margin: 5px" height="500px">
       <el-table-column prop="id" label="ID" width="60"></el-table-column>

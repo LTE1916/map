@@ -29,7 +29,7 @@ app.config.globalProperties.$global = {
     this.user = user
   },
   resetUser() {
-    this.firstLogin =  true;
+    this.firstLogin = true;
     this.user = {
       authority: "GUEST",
       avatarUrl: "",
