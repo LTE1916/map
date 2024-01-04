@@ -7,7 +7,28 @@ export default {
   components: {Message, Setting},
   data() {
     return {
+      alertVisible: false,
+      pageVisible: true,
       user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : {}
+    }
+  },
+  created() {
+
+    if(this.$global.firstLogin){
+      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
+      this.$global.firstLogin = false;
+    }
+    console.log(this.$global.user)
+    const userInfo = this.$global.user
+
+    if (userInfo.authority !== 'USER'&& userInfo.authority !== 'ADMIN') {
+      this.alertVisible = true;
+      this.pageVisible = false;
+      setTimeout(() => {
+        // 在等待2秒后执行的逻辑
+        this.$router.push('/login');
+      }, 2000);
+
     }
   },
   methods: {
@@ -48,7 +69,14 @@ export default {
 }
 </script>
 <template>
-  <el-container class="layout-container-demo" >
+  <el-alert
+      v-show="alertVisible"
+      title="无权限"
+      type="error"
+      description="返回登录界面，请重新登录"
+      show-icon
+  />
+  <el-container class="layout-container-demo" v-show="pageVisible">
     <el-header style="display: flex;justify-content: space-between; font-size: 20px">
       <!-- 左边容器，只包含 logo -->
       <div style="position: relative;">

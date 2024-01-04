@@ -1,6 +1,6 @@
 <template>
   <el-alert
-      v-model="alertVisible"
+      v-show="alertVisible"
       title="无权限"
       type="error"
       description="返回登录界面，请重新登录"
@@ -143,8 +143,13 @@ export default {
   },
   created() {
 
-    const user = this.$global.user
-    if (user.authority !== 'USER'&& user.authority !== 'ADMIN') {
+    if(this.$global.firstLogin){
+      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
+      this.$global.firstLogin = false;
+    }
+    const userInfo = this.$global.user
+
+    if (userInfo.authority !== 'USER'&& userInfo.authority !== 'ADMIN') {
       this.alertVisible = true;
       this.pageVisible = false;
       setTimeout(() => {

@@ -5,12 +5,32 @@ export default {
   name: "checkComment",
   data() {
     return {
+      alertVisible: false,
+      pageVisible: true,
       comments: [],
       recentComment:{},
       detailVisible:false
     }
   },
   created() {
+    if(this.$global.firstLogin){
+      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
+      this.$global.firstLogin = false;
+    }
+    const user = this.$global.user
+    if (user.authority !== 'ADMIN') {
+      this.alertVisible = true;
+      this.pageVisible = false;
+      setTimeout(() => {
+        // 在等待2秒后执行的逻辑
+        if(this.$global.user.authority === 'GUEST') {
+          this.$router.push('/login');
+        }else {
+          this.$router.push('/map');
+        }
+      }, 2000);
+
+    }
     this.loadData()
   },
   methods: {
@@ -48,7 +68,14 @@ export default {
 </script>
 
 <template>
-  <div v-for="item in comments" :key="item.id" style="border-bottom: 1px solid #ccc; padding: 10px 0; ">
+    <el-alert
+        v-show="alertVisible"
+        title="无权限"
+        type="error"
+        description="返回登录界面，请重新登录"
+        show-icon
+    />
+  <div v-show="pageVisible" v-for="item in comments" :key="item.id" style="border-bottom: 1px solid #ccc; padding: 10px 0; ">
     <div style="display: flex" class="comment-block">
       <div style="width: 100px; text-align: center" class="avatar">
         <el-image :src="item.avatarUrl" style="width: 50px; height: 50px; border-radius: 50%"></el-image>

@@ -1,14 +1,21 @@
 <template>
-  <div class="misc-view">
+  <div class="misc-view" >
+    <el-alert
+        v-show="alertVisible"
+        title="无权限"
+        type="error"
+        description="返回登录界面，请重新登录"
+        show-icon
+    />
     <!-- Batch Register Section -->
-    <div class="batch-register section" style="background: rgba(255, 255, 255, 0.5);">
+    <div class="batch-register section" style="background: rgba(255, 255, 255, 0.5);"  v-show="pageVisible">
       <h3>Batch Register</h3>
       <el-input v-model="start" placeholder="Start Number" ></el-input>
       <el-input v-model="end" placeholder="End Number"></el-input>
       <el-button @click="handleRegister">Confirm</el-button>
     </div>
 
-    <div class="block section">
+    <div class="block section"  v-show="pageVisible">
       <h3>Block User</h3>
       <el-input v-model="blockedUsername" placeholder="Username"></el-input>
       <el-button @click="handleBlock">Confirm</el-button>
@@ -47,10 +54,30 @@ export default {
     SearchBox,
   },
   created() {
+    if(this.$global.firstLogin){
+      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
+      this.$global.firstLogin = false;
+    }
+    const user = this.$global.user
+    if (user.authority !== 'ADMIN') {
+      this.alertVisible = true;
+      this.pageVisible = false;
+      setTimeout(() => {
+        // 在等待2秒后执行的逻辑
+        if(this.$global.user.authority === 'GUEST') {
+          this.$router.push('/login');
+        }else {
+          this.$router.push('/map');
+        }
+      }, 2000);
+
+    }
     this.loadBlockList();
   },
   data() {
     return {
+      alertVisible: false,
+      pageVisible: true,
       blockedUsername: null,
       start: null,
       end: null,

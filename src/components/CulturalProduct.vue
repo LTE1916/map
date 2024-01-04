@@ -1,5 +1,12 @@
 <template>
-  <div id="product">
+  <el-alert
+      v-show="alertVisible"
+      title="无权限"
+      type="error"
+      description="返回登录界面，请重新登录"
+      show-icon
+  />
+  <div id="product" v-show="pageVisible">
     <!-- 左侧菜单部分 -->
     <div class="sidebar">
       <h2>文创购买</h2>
@@ -57,6 +64,8 @@
 export default {
   data() {
     return {
+      alertVisible: false,
+      pageVisible: true,
       products: [],
       selectedProduct: null,
       cart: [],
@@ -64,6 +73,21 @@ export default {
     };
   },
   created() {
+    if(this.$global.firstLogin){
+      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
+      this.$global.firstLogin = false;
+    }
+    const user = this.$global.user
+    console.log(user)
+    if (user.authority !== 'USER'&& user.authority !== 'ADMIN') {
+      this.alertVisible = true;
+      this.pageVisible = false;
+      setTimeout(() => {
+        // 在等待2秒后执行的逻辑
+        this.$router.push('/login');
+      }, 2000);
+
+    }
     this.loadData()
   },
   methods: {

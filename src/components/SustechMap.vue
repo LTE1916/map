@@ -54,7 +54,7 @@
 
   <el-menu class = "custom-menu-container" mode="horizontal" text-color="#ffffff" active-text-color="#ffd04b">
     <el-button :icon="House"  class="custom-button" @click="navigateTo('0')" >主页</el-button>
-    <el-button :icon="ChatLineSquare" class="custom-button" @click="navigateTo('1')">论坛</el-button>
+    <el-button :icon="ChatLineSquare" class="custom-button" @click="navigateTo('1')">个人信息</el-button>
 
     <el-button :icon="Timer" class="custom-button" @click="navigateTo('2')"
                v-if="user && (user.authority === 'USER' || user.authority === 'ADMIN')">教室预定</el-button>
@@ -100,10 +100,14 @@ export default {
     const { proxy } = getCurrentInstance();
     const instance = getCurrentInstance()
     const global = instance.appContext.config.globalProperties.$global//先确定用户及权限
-    let user = JSON.parse(localStorage.getItem("user"));
+    let user = {};
+    if (global.firstLogin){
 
-    global.setUser(user);
-    user =  global.user;
+      global.setUser(JSON.parse(localStorage.getItem("user")));
+      global.firstLogin = false;
+    }
+      user =  global.user;
+
     const map = ref(null);
     const amap = ref(null)
 
@@ -251,8 +255,19 @@ export default {
       request.post("/user/logout", user).then(res => {
         if (res.code === '200') {
           console.log('logout 200ok')
-         //删除用户信息到浏览器
-          localStorage.removeItem("user");
+         //u用guest用户信息顶替到浏览器
+          let res={
+            code:200,
+            msg:"success",
+            data:{}
+          };
+          res.data = {
+            username: "guest",
+            authority: "GUEST"
+
+          }
+          localStorage.setItem("user", JSON.stringify(res.data))  // 存储用户信息到浏览器
+          //localStorage.removeItem("user");
           global.resetUser();
           router.push("/login")
           //this.$message.success("login success")
@@ -271,7 +286,8 @@ export default {
           showMainPage();
           break;
         case '1':
-          // window.location.href = 'http://
+
+          router.push("/manager")
           break;
         case '2':
           //教室预定

@@ -21,6 +21,7 @@ app.config.globalProperties.$global = {
     token: "",
     username: "guest"
   },
+  firstLogin: true,//是否第一次登录
   getUser() {
     return this.user
   },
@@ -36,7 +37,8 @@ app.config.globalProperties.$global = {
       password: "",
       token: "",
       username: "guest"
-    }
+    };
+    this.firstLogin =  true;
   }
 }
 

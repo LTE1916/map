@@ -1,5 +1,12 @@
 <template>
-  <el-card style="width: 1000px; height:600px; padding: 20px;background: rgba(255, 255, 255, 0.5);">
+  <el-alert
+      v-show="alertVisible"
+      title="无权限"
+      type="error"
+      description="返回登录界面，请重新登录"
+      show-icon
+  />
+  <el-card style="width: 1000px; height:600px; padding: 20px;background: rgba(255, 255, 255, 0.5);" v-show="pageVisible">
     <div class="flex-container">
       <div class="avatar-container">
         <el-upload
@@ -68,6 +75,8 @@ export default {
   components: {Message,User,Phone},
   data() {
     return {
+      alertVisible: false,
+      pageVisible: true,
       serverIp: serverIp,
       form: {},
       user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : {},
@@ -75,6 +84,26 @@ export default {
     };
   },
   created() {
+    if(this.$global.firstLogin){
+      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
+      this.$global.firstLogin = false;
+    }
+    const userInfo = this.$global.user
+    if (userInfo.authority !== 'USER'&& userInfo.authority !== 'ADMIN') {
+      this.alertVisible = true;
+      this.pageVisible = false;
+
+      setTimeout(() => {
+        // 在等待2秒后执行的逻辑
+        if(this.$global.user.authority === 'GUEST') {
+          this.$router.push('/login');
+        }else {
+          this.$router.push('/map');
+        }
+      }, 2000);
+
+    }
+    console.log(userInfo)
     this.getUser().then((res) => {
       console.log(res);
       this.form = res;

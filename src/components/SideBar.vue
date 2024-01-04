@@ -4,7 +4,7 @@
     <div v-show="this.scrollbarVisible">
       <el-scrollbar ref="scrollbarRef" height="100%">
         <div class="title" v-show="activeIndex ===1">
-          <img :src="this.avatarUrl" alt="建筑图片">
+          <img :src="this.building.photoUrl" alt="建筑图片">
           <div class="sidebar-header">
             <h1>{{ name }}</h1>
             <el-rate
@@ -41,7 +41,7 @@
               {{ this.building.text}}
             </div>
             <div class="summary.photo">
-              <img :src="this.building" alt="建筑图片">
+              <img :src="this.building.photoUrl" alt="建筑图片">
             </div>
             <div>
             </div>
@@ -274,7 +274,7 @@ export default {
         id: 11,
         name: "第一教学楼",
         text: "第一教学楼的描述",
-        photoUrl: "http://example.com/image1.jpg",
+        photoUrl: "https://sustech-ooad.oss-cn-guangzhou.aliyuncs.com/user/2024/01/04/a839278a91564eba960f2aab216eed46.jpg",
         bookingAvailable: false,
         floorNumber: 1
       },
@@ -290,7 +290,7 @@ export default {
           "  top: 50%; /* 垂直居中 */\n" +
           "  left: 0px; /* 根据按钮宽度调整，确保按钮紧贴侧边栏 */\n" +
           "  transform: translateY(-50%); /* 使用transform来精确居中 */\n" ,
-      avatarUrl : "http://localhost:8080/files/fa1e99a24de742b7bbb3420481781076.png",
+      avatarUrl : "https://sustech-ooad.oss-cn-guangzhou.aliyuncs.com/user/2024/01/04/a839278a91564eba960f2aab216eed46.jpg",
       radio1: 'walk',
       tableData: [
         { step:'' },
@@ -409,6 +409,7 @@ export default {
             // 使用箭头函数
             if (response.code === "200") {
               this.building = response.data
+
               console.log(this.building.text)
               console.log(this.building.photoUrl)
             } else {

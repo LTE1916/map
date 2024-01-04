@@ -1,5 +1,13 @@
+
 <template>
-  <div>
+  <el-alert
+      v-show="alertVisible"
+      title="无权限"
+      type="error"
+      description="返回登录界面，请重新登录"
+      show-icon
+  />
+  <div  v-show="pageVisible">
     <el-input
         v-model="search.username"
         placeholder="按用户名搜索"
@@ -90,6 +98,8 @@ export default {
   name: 'BookingInfoManager',
   data() {
     return {
+      alertVisible: false,
+      pageVisible: true,
       bookingData: [],
       search: {
         username: null,
@@ -111,7 +121,26 @@ export default {
       currentDisapproveBooking: null
     }
   },
+
   mounted() {
+    if(this.$global.firstLogin){
+      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
+      this.$global.firstLogin = false;
+    }
+    const user = this.$global.user
+    console.log(user)
+    if (user.authority !== 'ADMIN') {
+      this.alertVisible = true;
+      this.pageVisible = false;
+      setTimeout(() => {
+        // 在等待2秒后执行的逻辑
+        if(this.$global.user.authority === 'GUEST') {
+          this.$router.push('/login');
+        }else {
+          this.$router.push('/map');
+        }
+      }, 2000);
+    }
     this.fetchData()
   },
   methods: {
