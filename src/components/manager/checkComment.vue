@@ -59,7 +59,7 @@ export default {
     fail(item) {
       this.$request.delete(`/comment/${item.id}`).then(res => {
         if (res.code === '200') {
-          this.$message.success("已经拒绝")
+          this.$message.success("已拒绝")
           this.detailVisible = false
         } else {
           this.$message.error(res.msg)

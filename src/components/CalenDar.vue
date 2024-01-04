@@ -1,5 +1,6 @@
 <template>
   <div class="container">
+    <el-button :icon="House" class="custom-button-product" @click="showMainPage"  >返回主页</el-button>
     <el-row class="tac">
       <el-col :span="24">
         <h1 class="mb-2" style="font-weight: bold; font-size: 30px; text-align: center;">教室预订</h1>
@@ -78,6 +79,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin from '@fullcalendar/interaction';
 import {ElCol, ElMenu, ElMenuItem, ElRow} from 'element-plus';
+import {House} from "@element-plus/icons-vue";
 
 export default {
   components: {
@@ -89,6 +91,7 @@ export default {
   },
   data() {
     return {
+      House,
       selectedBuilding: null,
       selectedFloor: null,
       selectedRoomName: '',
@@ -133,6 +136,9 @@ export default {
     this.loadData()
   },
   methods: {
+    showMainPage() {
+      this.$router.push('/map');
+    },
     disablePrevButton(info) {
       const currentDate = new Date();
       const calendarStartDate = info.start;
