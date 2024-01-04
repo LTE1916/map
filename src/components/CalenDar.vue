@@ -1,12 +1,5 @@
 <template>
-  <el-alert
-      v-show="alertVisible"
-      title="无权限"
-      type="error"
-      description="返回登录界面，请重新登录"
-      show-icon
-  />
-  <div class="container" v-show="pageVisible">
+  <div class="container">
     <el-row class="tac">
       <el-col :span="24">
         <h1 class="mb-2" style="font-weight: bold; font-size: 30px; text-align: center;">教室预订</h1>
@@ -78,8 +71,6 @@
         </template>
       </div>
     </div>
-
-
   </div>
 </template>
 
@@ -103,10 +94,9 @@ export default {
       selectedBuilding: null,
       selectedFloor: null,
       selectedRoomName: '',
+      selectedClassroomId:0,
       selectedTimeRange: [null, null],
       dialogVisible: false,
-      alertVisible: false,
-      pageVisible: true,
       reservation: {},
       user: {},
       buildings: [],
@@ -142,22 +132,6 @@ export default {
     };
   },
   created() {
-
-    if(this.$global.firstLogin){
-      this.$global.setUser(JSON.parse(localStorage.getItem("user")));
-      this.$global.firstLogin = false;
-    }
-    const userInfo = this.$global.user
-
-    if (userInfo.authority !== 'USER'&& userInfo.authority !== 'ADMIN') {
-      this.alertVisible = true;
-      this.pageVisible = false;
-      setTimeout(() => {
-        // 在等待2秒后执行的逻辑
-        this.$router.push('/login');
-      }, 2000);
-
-    }
     this.loadData()
   },
   methods: {
@@ -193,9 +167,10 @@ export default {
         username: this.user.username,
         startTime: this.formatTimeForBackend(this.selectedTimeRange[0]),
         endTime: this.formatTimeForBackend(this.selectedTimeRange[1]),
-        classroom: this.selectedRoomName,
-        building: this.selectedBuilding.name,
-        floor: this.selectedFloor,
+        classroomId:this.selectedClassroomId,
+        // classroom: this.selectedRoomName,
+        // building: this.selectedBuilding.name,
+        // floor: this.selectedFloor,
       }).then((response) => {
         if (response.code === '200') {
           this.$message.success('预约提交成功');
@@ -225,8 +200,8 @@ export default {
         }
       })
     },
-    loadClassroom(building, floor) {
-      return this.$request.get(`/classroom/searchFloor?building=${building}&floor=${floor}`).then((res) => {
+    loadClassroom(buildingId, floor) {
+      return this.$request.get(`/classroom/searchFloor?buildingId=${buildingId}&floor=${floor}`).then((res) => {
         if (res.code === "200") {
           const classrooms = res.data;
           this.calendarOptions.resources = classrooms.map(classroom => ({
@@ -244,7 +219,6 @@ export default {
         throw error;
       });
     },
-
     async loadCurEvents(classrooms) {
       for (const classroom of classrooms) {
         try {
@@ -278,9 +252,8 @@ export default {
     handleTimeRangeSelect(info) {
       if (info && info.start && info.end && typeof info.start.getHours === 'function' && typeof info.end.getHours === 'function' && info.start > new Date()) {
         const isOverlap = this.isTimeRangeOverlap(info.start, info.end, info);
-
         if (!isOverlap) {
-          this.selectedRoomName = info.resource.title;
+          this.selectedClassroomId = info.resource.id;
           this.selectedTimeRange = [info.start, info.end];
           this.dialogVisible = true;
         } else {
@@ -308,9 +281,9 @@ export default {
         }
         if (
             ((event.resourceId === info.resource.id && event.username !== currentUser) &&
-                ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
-                    (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
-                    (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))||
+            ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
+                (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
+                (newStartTime <= eventStartTime && newEndTime >= eventEndTime)))||
             ((event.resourceId === info.resource.id && event.username === currentUser) &&
                 ((newStartTime >= eventStartTime && newStartTime < eventEndTime) ||
                     (newEndTime > eventStartTime && newEndTime <= eventEndTime) ||
@@ -336,7 +309,7 @@ export default {
     updateFullCalendar(building, floor) {
       console.log("updateFull")
       this.calendarOptions.events = [];
-      this.loadClassroom(building.name, floor).then(classrooms => {
+      this.loadClassroom(building.id, floor).then(classrooms => {
         this.loadCurEvents(classrooms)
       }).catch(error => {
         console.error('Error loading classrooms:', error);

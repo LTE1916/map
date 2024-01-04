@@ -7,6 +7,7 @@ export default {
   components: {Message, Setting},
   data() {
     return {
+      itemVisible: true,
       alertVisible: false,
       pageVisible: true,
       user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : {}
@@ -29,6 +30,8 @@ export default {
         this.$router.push('/login');
       }, 2000);
 
+    }else if(userInfo.authority === 'USER'){
+      this.itemVisible = false;
     }
   },
   methods: {
@@ -49,6 +52,9 @@ export default {
     },
     handleProduct(){
       this.$router.push('/productUpload')
+    },
+    handleBuilding(){
+      this.$router.push('/building')
     },
     handleLogout() {
       if (this.user!=null){
@@ -120,7 +126,7 @@ export default {
                 <span class="menu-item-text">个人信息</span>
               </template>
             </el-menu-item>
-            <el-menu-item index="2" @click="handleChecking()">
+            <el-menu-item index="2" @click="handleChecking()" v-show="itemVisible">
               <template #title>
                 <el-icon>
                   <message/>
@@ -128,7 +134,7 @@ export default {
                 <span class="menu-item-text">审核评论</span>
               </template>
             </el-menu-item>
-            <el-menu-item index="3" @click="handlemisc()">
+            <el-menu-item index="3" @click="handlemisc()" v-show="itemVisible">
               <template #title>
                 <el-icon>
                   <message/>
@@ -136,7 +142,7 @@ export default {
                 <span class="menu-item-text">批注册及黑名单设置</span>
               </template>
             </el-menu-item>
-            <el-menu-item index="4" @click="handleBooking()">
+            <el-menu-item index="4" @click="handleBooking()" v-show="itemVisible">
               <template #title>
                 <el-icon>
                   <message/>
@@ -144,12 +150,20 @@ export default {
                 <span class="menu-item-text">教室预约管理</span>
               </template>
             </el-menu-item>
-            <el-menu-item index="5" @click="handleProduct()">
+            <el-menu-item index="5" @click="handleProduct()" v-show="itemVisible">
               <template #title>
                 <el-icon>
                   <message/>
                 </el-icon>
                 <span class="menu-item-text">文创管理</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="6" @click="handleBuilding()" v-show="itemVisible">
+              <template #title>
+                <el-icon>
+                  <message/>
+                </el-icon>
+                <span class="menu-item-text">建筑管理</span>
               </template>
             </el-menu-item>
           </el-menu>

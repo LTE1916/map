@@ -63,6 +63,11 @@ const routes = [
                 name:'ProductUpload',
                 component:()=>import('../components/manager/ProductUpload.vue')
             },
+            {
+                path: '/building',
+                name:'Building',
+                component:()=>import('../components/manager/building.vue')
+            },
         ]
     },
     {

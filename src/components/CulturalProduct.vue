@@ -7,8 +7,12 @@
       show-icon
   />
   <div id="product" v-show="pageVisible">
+
     <!-- 左侧菜单部分 -->
-    <div class="sidebar">
+    <div class="sidebar1">
+      <div class="payment-bar">
+      <el-button :icon="House" class="custom-button-product" @click="showMainPage"  >返回主页</el-button>
+      </div>
       <h2>文创购买</h2>
       <ul>
         <li v-for="product in products" :key="product.id" @click="selectProduct(product)">
@@ -61,9 +65,11 @@
 </template>
 
 <script>
+import {House} from "@element-plus/icons-vue";
 export default {
   data() {
     return {
+      House,
       alertVisible: false,
       pageVisible: true,
       products: [],
@@ -91,6 +97,9 @@ export default {
     this.loadData()
   },
   methods: {
+    showMainPage() {
+      this.$router.push('/map');
+    },
     loadData() {
       this.$request.get('/product')
           .then((res) => {
@@ -188,7 +197,7 @@ export default {
   background: linear-gradient(to right, var(--el-color-primary-light-8), #BC8F8F);
 }
 
-.sidebar {
+.sidebar1 {
   width: 25%;
   background-color: rgba(240, 240, 240, 0.8); /* 设置透明度的背景颜色 */
   padding: 20px;
@@ -197,20 +206,20 @@ export default {
   flex-direction: column;
 }
 
-.sidebar h2 {
+.sidebar1 h2 {
   margin-bottom: 20px;
   font-size: 3em;
   color: #333;
   text-align: center; /* 居中对齐 */
 }
 
-.sidebar ul {
+.sidebar1 ul {
   list-style-type: none;
   padding: 0;
   flex-grow: 1;
 }
 
-.sidebar li {
+.sidebar1 li {
   cursor: pointer;
   margin-bottom: 10px; /* 调整按钮之间的垂直间距 */
   padding: 10px 15px; /* 调整按钮内部上下左右的内边距 */
@@ -222,7 +231,7 @@ export default {
 }
 
 
-.sidebar li:hover {
+.sidebar1 li:hover {
   background-color: #ccc;
 }
 
@@ -334,5 +343,15 @@ button:hover {
 
 .payment-bar button:hover {
   background-color: #BC8F8F;
+}
+.custom-button-product {
+
+  background-color: #ffffff; /* 设置按钮的背景色 */
+  font-size: 13px;
+  color: #111010;
+  margin-left: 20px; /* 设置左边边距 */
+  font-family: 'Roboto', sans-serif;
+  border-radius: 20px; /* 设置按钮的圆角 */
+  border: 1px solid #dcdcdc; /* 添加边框 */
 }
 </style>

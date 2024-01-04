@@ -8,45 +8,7 @@
       </div>
   </div>
 
-    <el-popover
-        v-model:visible= popoverVisible
-        trigger="manual"
-        :title="title"
-        width="500"
-        height="1600"
-        :style="{ top: popoverTop, left: popoverLeft }">
-      <el-button type="danger" size="small"  @click="popoverVisible = false"
-                 style="position: absolute; top: 0; right: 0;">close
-      </el-button>
-        <!-- 添加弹出内容 -->
-      <div>{{ introduction }}</div>
-      <el-button type="primary" size="small" @click="openReviewForm"
-          >Review</el-button>
-        <!-- Review form -->
-        <div v-if="reviewFormVisible">
-          <!-- Add input fields or file upload for text and images -->
-          <textarea v-model="reviewText" placeholder="Enter your review"></textarea>
-<!--          <input type="file" @change="handleFileUpload" accept="image/*">-->
-          <el-upload
-              ref="fileUpload"
-              action="/upload"
-              multiple
-              accept="image/*"
-              :on-change="handleFileUpload"
-          >
-            <el-button type="primary" size="small">Select Images</el-button>
-          </el-upload>
-<!--          <button @click="submitReview">Submit</button>-->
-          <el-button
-              type="primary"
-              size="small"
-              style=""
-              @click="reviewFormVisible ? submitReview() : popoverVisible = false"
-          >
-            {{ reviewFormVisible ? 'Submit' : 'Close' }}
-          </el-button>
-        </div>
-    </el-popover>
+
     <div>
       <sidebar  ref="sidebarRef"></sidebar> <!-- 在map.vue中使用sidebar组件 -->
     </div>
@@ -81,7 +43,7 @@
 import AMapLoader from '@amap/amap-jsapi-loader';
 
 import Sidebar from './SideBar.vue'; // 导入sidebar.vue组件
-import {ElButton, ElPopover, ElUpload } from 'element-plus';
+import {ElButton } from 'element-plus';
 import 'element-plus/dist/index.css'
 
 import {getCurrentInstance, onMounted, ref,} from "vue";
@@ -90,9 +52,8 @@ import {House,ChatLineSquare,Timer,ShoppingCart,Search,ArrowLeft,Van,User} from 
 export default {
   components: {
     Sidebar,
-    ElUpload,
     ElButton,
-    ElPopover,
+
 
   },
 
@@ -101,6 +62,7 @@ export default {
     const instance = getCurrentInstance()
     const global = instance.appContext.config.globalProperties.$global//先确定用户及权限
     let user = {};
+    console.log(global)
     if (global.firstLogin){
 
       global.setUser(JSON.parse(localStorage.getItem("user")));
@@ -128,7 +90,7 @@ export default {
     const busStationOverlay = ref(null);
     const buildingOverlay = ref(null);
     const navigationOverlay = ref(null);
-    const popoverVisible = ref(false);
+
     const navigationFlag = ref(false);
     const chooseStartFlag = ref(true);
     const start = ref('');
@@ -182,8 +144,7 @@ export default {
     const jiu_hua = ref(null)
     const office = ref(null)
     const administrative_building = ref(null)
-    const popoverTop = ref(0);
-    const popoverLeft = ref(0);
+
     const faculty_apartment1 = ref(null)
     const faculty_apartment2 = ref(null)
     const faculty_apartment3 = ref(null)
@@ -251,9 +212,11 @@ export default {
       router.push("/login")
     };
     const logout = () => {
+      global.resetUser();
       //const curUser = localStorage.getItem("user");
       request.post("/user/logout", user).then(res => {
         if (res.code === '200') {
+
           console.log('logout 200ok')
          //u用guest用户信息顶替到浏览器
           let res={
@@ -268,7 +231,8 @@ export default {
           }
           localStorage.setItem("user", JSON.stringify(res.data))  // 存储用户信息到浏览器
           //localStorage.removeItem("user");
-          global.resetUser();
+
+
           router.push("/login")
           //this.$message.success("login success")
         }
@@ -599,7 +563,7 @@ export default {
           chooseStartFlag.value = true;
         }
       }else {
-      popoverVisible.value = true;
+
       title.value = $event.target._originOpts.title;
       SideBarRef.value.setName(title.value);
 
@@ -1173,9 +1137,7 @@ export default {
       line4Markers,
       showBuildingMarkFlag,
       shownavigationFlag,
-      popoverVisible,
-      popoverTop,
-      popoverLeft,
+
       title,
       introduction,
       username,

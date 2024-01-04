@@ -9,12 +9,11 @@
   <div v-show="pageVisible">
 
     <!-- 表格 -->
-    <el-table :data="bookingData" style="width: 100%; margin: 5px" height="600px">
+    <el-table :data="bookingData" style="width: 100%; margin: 5px" height="500px">
       <el-table-column prop="id" label="ID" width="100"></el-table-column>
       <el-table-column prop="type" label="文创类型" width="200"></el-table-column>
       <el-table-column prop="name" label="文创名字" width="200"></el-table-column>
       <el-table-column prop="price" label="产品单价" width="100"></el-table-column>
-
       <el-table-column label="操作" width="180">
         <template v-slot="scope">
           <el-button size="mini" @click="openEditDialog(scope.row)">编辑</el-button>
@@ -22,6 +21,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-button type="primary" @click="openAddDialog">新增</el-button>
     <el-dialog v-model="editDialogVisible" title="编辑产品信息" width="30%">
       <el-form :model="currentEditBooking">
         <el-form-item label="文创名字">
@@ -32,6 +32,18 @@
         </el-form-item>
         <el-form-item label="文创类型">
           <el-input v-model="currentEditBooking.type"></el-input>
+        </el-form-item>
+        <el-form-item label="照片">
+          <el-upload
+              class="avatar-uploader"
+              :action="'http://' + serverIp + ':8080/files/upload'"
+              :show-file-list="false"
+              :on-success="handleAvatarSuccess"
+              :class="{'is-success': uploadSuccess }"
+          >
+            <img v-if="currentEditBooking.photoUrl" :src="currentEditBooking.photoUrl" class="avatar circular-avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
         </el-form-item>
       </el-form>
       <template v-slot:footer>
@@ -55,10 +67,13 @@
 </template>
 
 <script>
+import {serverIp} from "../../../public/config";
+
 export default {
   name: 'BookingInfoManager',
   data() {
     return {
+      serverIp: serverIp,
       alertVisible: false,
       pageVisible: true,
       bookingData: [],
@@ -71,7 +86,8 @@ export default {
         type: ''
       },
       confirmDialogVisible: false,
-      currentDisapproveBooking: null
+      currentDisapproveBooking: null,
+      uploadSuccess: false
     }
   },
   mounted() {
@@ -96,6 +112,16 @@ export default {
     this.fetchData()
   },
   methods: {
+    openAddDialog() {
+      this.currentEditBooking = {
+        id: 0,
+        name: '',
+        photoUrl: '',
+        price: '',
+        type: ''
+      };
+      this.editDialogVisible = true;
+    },
     fetchData() {
       this.$request.get('/product')
           .then(response => {
@@ -116,19 +142,37 @@ export default {
       this.editDialogVisible = true;
     },
     submitEditBooking() {
-      this.$request.post('/product', this.currentEditBooking)
-          .then(response => {
-            if(response.code === '200'){
-              console.log('Edit successful:', response);
-              this.editDialogVisible = false;
-              this.fetchData();
-            }else {
-              console.log('Edit error:', response.data.msg);
-            }
-          })
-          .catch(error => {
-            console.error('Error during update:', error);
-          });
+      if (this.currentEditBooking.id) {
+        // 编辑操作
+        this.$request.post('/product', this.currentEditBooking)
+            .then(response => {
+              if (response.code === '200') {
+                console.log('Edit successful:', response);
+                this.editDialogVisible = false;
+                this.fetchData();
+              } else {
+                console.log('Edit error:', response.data.msg);
+              }
+            })
+            .catch(error => {
+              console.error('Error during update:', error);
+            });
+      } else {
+        // 新增操作
+        this.$request.post('/product', this.currentEditBooking)
+            .then(response => {
+              if (response.code === '200') {
+                console.log('Add successful:', response);
+                this.editDialogVisible = false;
+                this.fetchData();
+              } else {
+                console.log('Add error:', response.data.msg);
+              }
+            })
+            .catch(error => {
+              console.error('Error during add:', error);
+            });
+      }
     },
     openConfirmDialog(row) {
       this.currentDisapproveBooking = row;
@@ -140,6 +184,15 @@ export default {
             done();
           })
           .catch(()=> {});
+    },
+    handleAvatarSuccess(res) {
+      if (res.code === '200') { // 假设成功的code是200
+        this.currentEditBooking.photoUrl = res.data; // 更新图片URL
+        this.uploadSuccess = true;
+      } else {
+        console.error('Upload error:', res.msg); // 打印错误消息
+      }
+      console.log(res);
     },
     deleteBooking() {
       if (!this.currentDisapproveBooking) return;
@@ -164,3 +217,26 @@ export default {
   }
 }
 </script>
+<style scoped>
+.avatar-uploader {
+  max-width: 100%; /* 限制上传组件的最大宽度 */
+}
+
+.avatar {
+  max-width: 100%; /* 限制图片的最大宽度 */
+  max-height: 200px; /* 限制图片的最大高度 */
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 78px;
+  height: 78px;
+  line-height: 78px;
+  text-align: center;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+}
+</style>

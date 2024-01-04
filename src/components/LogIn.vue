@@ -65,6 +65,16 @@ export default {
       loggedIn: false
     };
   },
+  created() {
+    console.log(this.$global.user)
+    console.log(this.$global.firstLogin)
+    if (!this.$global.firstLogin) {
+      const userInfo = this.$global.user
+      if (userInfo.authority === 'USER' || userInfo.authority === 'ADMIN') {
+        this.$router.push("/map")
+      }
+    }
+  },
   methods: {
     enterGuestMode() {
       // Implement guest mode logic
