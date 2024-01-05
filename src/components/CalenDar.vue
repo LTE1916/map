@@ -26,9 +26,7 @@
           </el-sub-menu>
 
 
-          <el-menu-item index="4">
-            <span>我的预约</span>
-          </el-menu-item>
+
 
         </el-menu>
       </el-col>

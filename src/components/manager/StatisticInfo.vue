@@ -22,9 +22,9 @@ export default {
   name: "StatisticInfo",
   data() {
     return {
-      buildingInfoMap: {},
-      building1Info:{},
-      building2Info:{},
+      // buildingInfoMap: {},
+      // building1Info:{},
+      // building2Info:{},
       chart: null,
       chartData: {
         // 这里是你要绘制的饼图数据
@@ -32,9 +32,12 @@ export default {
       alertVisible: false,
       pageVisible: true,
       info: [],
+      buildingUsage:{}
 
     }
   },
+
+
   created() {
     if(this.$global.firstLogin){
       this.$global.setUser(JSON.parse(localStorage.getItem("user")));
@@ -63,32 +66,45 @@ export default {
     this.loadData()
     this.chart = echarts.init(this.$refs.chart)
     // 在 ECharts 实例中配置图表
-    this.chart.setOption(this.setOption())
   },
   methods: {
     setOption() {
+      const yiJiao = this.getChartDataForYiJiao();
+      const sanJiao = this.getChartDataForYiJiao1();
+      const totalUsageYiJiao = this.getTotalUsageForBuilding(this.buildingUsage["第一教学楼"]);
+      const totalUsageSanJiao = this.getTotalUsageForBuilding(this.buildingUsage["第三教学楼"]);
+      const comparisonData = [
+        { value: totalUsageYiJiao, name: '一教' },
+        { value: totalUsageSanJiao, name: '三教' }
+      ];
       return {
-        // 这里是你的 ECharts 配置项
-        title: {
-          text: '一教预约统计图',
-          subtext: '各个教室预约情况',
-          left: 'center'
-        },
         tooltip: {
           trigger: 'item',
           formatter: '{a} <br/>{b}: {c} ({d}%)'
         },
-        legend: {
-          orient: 'vertical',
-          left: 10,
-          data: ['数据1', '数据2', '数据3', '数据4', '数据5']
-        },
+        legend: [
+          {
+            // 第一个图例，对应“一教”
+            orient: 'vertical',
+            left: 'left', // 将图例放置在左侧
+            top: 'center', // 垂直居中
+            data: yiJiao.map(item => item.name)
+          },
+          {
+            // 第二个图例，对应“三教”
+            orient: 'vertical',
+            right: 'right', // 将图例放置在右侧
+            top: 'center', // 垂直居中
+            data: sanJiao.map(item => item.name)
+          }
+
+        ],
         series: [
           {
-            name: '一教预约统计图',
+            name: '一教预约统计',
             type: 'pie',
             radius: ['50%', '70%'],
-            avoidLabelOverlap: false,
+            center: ['25%', '50%'], // 将“一教”饼图放置在左侧
             label: {
               show: false,
               position: 'center'
@@ -103,45 +119,151 @@ export default {
             labelLine: {
               show: false
             },
-            data: [
-              {value: 335, name: '数据1'},
-              {value: 310, name: '数据2'},
-              {value: 234, name: '数据3'},
-              {value: 135, name: '数据4'},
-              {value: 1548, name: '数据5'}
-            ]
+            data: yiJiao
+          },
+          {
+            name: '三教预约统计',
+            type: 'pie',
+            radius: ['50%', '70%'],
+            center: ['75%', '50%'], // 将“三教”饼图放置在右侧
+            label: {
+              show: false,
+              position: 'center'
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: '30',
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: false
+            },
+            data: sanJiao
+          },
+          {
+            // 新增的百分比图系列配置
+            name: '教学楼使用对比',
+            type: 'pie',
+            radius: ['30%', '45%'], // 适当减小半径以适应屏幕
+            center: ['50%', '75%'], // 调整中心位置，确保在屏幕上可见
+            data: comparisonData
+          }
+        ],
+        title: [
+          {
+            // “一教”的标题
+            text: '一教预约统计',
+            left: '25%',
+            textAlign: 'center'
+          },
+          {
+            // “三教”的标题
+            text: '三教预约统计',
+            left: '75%',
+            textAlign: 'center'
+          },
+          {
+            // 新增的百分比图标题配置
+            text: '教学楼使用对比',
+            left: '50%',
+            top: '35%', // 调整标题位置，确保在饼图上方
+            textAlign: 'center'
           }
         ]
       }
     },
-      loadData() {
+
+    loadData() {
       this.$request.get("/booking-info/all")
       .then((response) => {
         if (response.code === "200") {
           this.info = response.data
           console.log(this.info)
+          this.mapClassroomsToBuildings();
+          this.$nextTick(this.updateChart);
         }
       })
     },
-    analysisData(){
-      this.info.forEach(item => {
-        // 发送请求以获取每个classroomId对应的building信息
-        this.$request.post(`/booking-info/Room/${item.classroomId}`)
-        .then((response) => {
-          if (response.code === "200") {
-            const buildingName = response.data.building; // 假设响应中有一个名为building的字段表示建筑物名称
-            // 统计每个建筑物的info总数
-            if (this.buildingInfoMap[buildingName]) {
-              this.buildingInfoMap[buildingName]++;
-            } else {
-              this.buildingInfoMap[buildingName] = 1;
-            }
-          }
-        })
-        .catch(error => {
-          console.error("Error fetching building info:", error);
-        });
+    updateChart() {
+      this.chart.setOption(this.setOption());
+    }
+    ,
+    mapClassroomsToBuildings() {
+      const promises = this.info.map(booking => this.fetchBuildingInfo(booking.classroomId));
+      Promise.all(promises).then(() => {
+        this.updateChart(); // 更新图表
       });
+    },
+    fetchBuildingInfo(classroomId) {
+      return new Promise((resolve, reject) => {
+        this.$request.get(`/classroom/${classroomId}`)
+            .then(response => {
+              if (response.code === "200") {
+                const classroomName = response.data.name;
+                const buildingId = response.data.buildingId;
+                this.$request.get(`/building/searchById/${buildingId}`)
+                    .then(response => {
+                      if (response.code === "200"){
+                        const buildingName = response.data.name;
+                        this.updateBuildingUsage(buildingName, classroomName);
+                        resolve(); // 解析 Promise
+                      }
+                    })
+              } else {
+                resolve(); // 即使请求失败也要解析 Promise
+              }
+            }).catch(reject);
+      });
+    },
+    getTotalUsageForBuilding(buildingData) {
+      // 检查 buildingData 是否为 null 或 undefined
+      if (!buildingData) {
+        return 0; // 如果是，直接返回 0
+      }
+      // 如果 buildingData 是对象，则继续计算
+      return Object.values(buildingData).reduce((sum, usage) => sum + usage, 0);
+    }
+    ,
+    updateBuildingUsage(buildingName, classroomId) {
+      if (!this.buildingUsage[buildingName]) {
+        this.buildingUsage[buildingName] = {};
+      }
+      if (!this.buildingUsage[buildingName][classroomId]) {
+        this.buildingUsage[buildingName][classroomId] = 0;
+      }
+      this.buildingUsage[buildingName][classroomId]++;
+    },
+    getChartDataForYiJiao() {
+      const yiJiaoData = [];
+      const building = this.buildingUsage["第一教学楼"];
+      if (building) {
+        for (const classroomId in building) {
+          if (Object.prototype.hasOwnProperty.call(building, classroomId)) {
+            yiJiaoData.push({
+              value: building[classroomId],
+              name: `一教${classroomId}`
+            });
+          }
+        }
+      }
+      return yiJiaoData;
+    },
+    getChartDataForYiJiao1() {
+      const yiJiaoData1 = [];
+      const building = this.buildingUsage["第三教学楼"];
+      if (building) {
+        for (const classroomId in building) {
+          if (Object.prototype.hasOwnProperty.call(building, classroomId)) {
+            yiJiaoData1.push({
+              value: building[classroomId],
+              name: `三教${classroomId}`
+            });
+          }
+        }
+      }
+      return yiJiaoData1;
     }
   }
 }

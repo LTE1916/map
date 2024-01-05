@@ -26,8 +26,12 @@
 
     <el-button :icon="Van" class="custom-button" @click="navigateTo('4')"> 公交站点 </el-button>
     <el-button :icon="Search" class="custom-button" @click="navigateTo('5')"> 导航 </el-button>
-    <el-button :icon="ArrowLeft" round >test button</el-button>
-
+    <el-button :icon="ArrowLeft" round  class="custom-button" @click="navigateTo('6')"
+               v-if="(user &&  user.authority === 'ADMIN')">编辑校巴</el-button>
+    <el-button :icon="ArrowLeft" round  class="custom-button" @click="changeEditLine"
+               v-if="(user &&  user.authority === 'ADMIN')">切换编辑路线</el-button>
+    <el-button :icon="ArrowLeft" round  class="custom-button" @click="navigateTo('7')"
+               v-if="(user &&  user.authority === 'ADMIN')">保存编辑</el-button>
   </el-menu>
   <div class="logout-button">
     <el-button :icon="User" class="custom-button" @click="logout" position="right"
@@ -85,8 +89,11 @@ export default {
     const bus_line2 = ref(null);
     const walking_line = ref(null); //步行导航
     const showBuildingMarkFlag = ref(true);
-    const showBusStationMarkFlag = ref(false);
+    const showBusStationMarkFlag = ref(false);//同时展示所有公交路线
+    const showBusLine1Flag = ref(false);
+    const showBusLine2Flag = ref(false);
     const shownavigationFlag = ref(false);
+    const showEditBusFlag = ref(false);
     const busStationOverlay = ref(null);
     const buildingOverlay = ref(null);
     const navigationOverlay = ref(null);
@@ -161,11 +168,16 @@ export default {
     const endIcon = ref(null);
     const activeSidebar = ref(false);
 
-    const xing_yuan = ref(null)
-    const hui_yuan = ref(null)
-    const chuang_yuan = ref(null)
-    const li_yuan = ref(null)
-    const student_dormitry = ref(null)
+    const xing_yuan_line1 = ref(null)
+    const xing_yuan_line2 = ref(null)
+    const hui_yuan_line1 = ref(null)
+    const hui_yuan_line2 = ref(null)
+    const chuang_yuan_line1 = ref(null)
+    const chuang_yuan_line2 = ref(null)
+    const li_yuan_line1 = ref(null)
+    const li_yuan_line2 = ref(null)
+    const student_dormitry_line1 = ref(null)
+    const student_dormitry_line2 = ref(null)
     const community_health_center = ref(null)
     const faculty_cafeteria = ref(null)
     const guest_house = ref(null)
@@ -174,7 +186,8 @@ export default {
     const gate1 = ref(null)
     const administration_building = ref(null)
     const gate7 = ref(null)
-    const research_building = ref(null)
+    const research_building_line1 = ref(null)
+    const research_building_line2 = ref(null)
     const COEN = ref(null)
     const COES = ref(null)
     const SideBarRef = ref(null);
@@ -243,6 +256,35 @@ export default {
 
       //router.push("/login")
     };
+    const changeEditLine = () => {
+      if (showBusLine1Flag.value){
+        showBusLine1Flag.value = false;
+        showBusLine2Flag.value = true;
+        bus_line1.value.hide();
+        bus_line2.value.show();
+        for (let i = 0; i < line1Markers.length; i++) {
+          line1Markers[i].hide();
+          line1Markers[i].setDraggable(false);
+        }
+        for (let i = 0; i < line2Markers.length; i++) {
+          line2Markers[i].show();
+          line2Markers[i].setDraggable(true);
+        }
+      }else {
+        showBusLine1Flag.value = true;
+        showBusLine2Flag.value = false;
+        bus_line1.value.show();
+        bus_line2.value.hide();
+        for (let i = 0; i < line1Markers.length; i++) {
+          line1Markers[i].show();
+          line1Markers[i].setDraggable(true);
+        }
+        for (let i = 0; i < line2Markers.length; i++) {
+          line2Markers[i].hide();
+          line2Markers[i].setDraggable(false);
+        }
+      }
+    }
     const navigateTo = (index) => {
 
       switch (index) {
@@ -250,7 +292,6 @@ export default {
           showMainPage();
           break;
         case '1':
-
           router.push("/manager")
           break;
         case '2':
@@ -263,10 +304,17 @@ export default {
           //  window.location.href = 'http://
           break;
         case '4':
-          showBusStationMarkers();
+          showBusStationMarkers(true);
           break;
         case '5':
           handleNavigation();
+          break;
+        case '6':
+          handleEditBus();
+          break;
+        case '7':
+          saveEditBus();
+          break;
       }
 
       // Add logic to handle navigation based on index
@@ -289,10 +337,13 @@ export default {
       reviewFormVisible.value = false;
     };
 
-    const showMainPage = () => {
+    const  showMainPage = () => {
       showBuildingMarkFlag.value = true;
       showBusStationMarkFlag.value = false;
+      showBusLine1Flag.value = false;
+      showBusLine2Flag.value = false;
       shownavigationFlag.value = false;
+      showEditBusFlag.value = false;
       for (let i = 0; i < markers.length; i++) {
         markers[i].show();
       }
@@ -314,9 +365,73 @@ export default {
       }
     }
 
-    const showBusStationMarkers = () => {
+
+
+    const showBusStationMarkers = (reload) => {
       showBusStationMarkFlag.value = true;
       showBuildingMarkFlag.value = false;
+      showBusLine1Flag.value = false;
+      showBusLine2Flag.value = false;
+      let waypoint1 = [];
+      let waypoint2 = [];
+      if(reload){
+
+        request.get("/line-station").then(res => {
+          if (res.code === '200') {
+            let stations = [];//所有站点的id stationName latitude longitude
+
+            request.get("/bus-stations").then(allStations => {
+              allStations.data.forEach(item => {stations.push(item)})
+
+              res.data.forEach(item => {
+                let matchedStations = stations.filter(station => station.stationId === item.stationId);
+                matchedStations[0].order = item.stationOrder;
+                matchedStations[0].lineId = item.lineId;
+
+                if(item.lineId === 1) {
+                  waypoint1.push(matchedStations[0]);
+                  let index = line1Markers.findIndex(marker =>  marker._originOpts.title === matchedStations[0].stationName);
+                  line1Markers[index].setPosition([matchedStations[0].longitude, matchedStations[0].latitude]);
+
+                }else {
+                  waypoint2.push(matchedStations[0]);
+                  let index = line2Markers.findIndex(marker =>  marker._originOpts.title === matchedStations[0].stationName);
+                  line2Markers[index].setPosition([matchedStations[0].longitude, matchedStations[0].latitude]);
+                }
+              })
+              const driving2 = new amap.value.Driving({});
+              driving2.search(line1Markers[0]._position, line1Markers[line1Markers.length - 1]._position
+                  , {waypoints: line1Markers.map(item => item._position)},function(status, result){
+                    if (status === 'complete') {
+                      let tmpPath = [];
+                      const steps = result.routes[0].steps;
+                      for (let i = 0; i < steps.length; i++) {
+                        tmpPath = tmpPath.concat(steps[i].path);
+                      }
+                      bus_line1.value.setPath(tmpPath)
+                    }
+                  })
+
+              driving2.search(line2Markers[0]._position, line2Markers[line2Markers.length - 1]._position
+                  , {waypoints: line2Markers.map(item => item._position)},function(status, result){
+                    if (status === 'complete') {
+                      let tmpPath = [];
+                      const steps = result.routes[0].steps;
+                      for (let i = 0; i < steps.length; i++) {
+                        tmpPath = tmpPath.concat(steps[i].path);
+                      }
+                      bus_line2.value.setPath(tmpPath)
+                    }
+                  })
+
+            })
+            }
+
+          })
+
+
+
+      }
       for (let i = 0; i < markers.length; i++) {
         markers[i].hide();
       }
@@ -327,6 +442,116 @@ export default {
       bus_line2.value.show();
     }
 
+    const handleEditBus = () => {
+      showEditBusFlag.value = true;
+      showBuildingMarkFlag.value = false;
+      showBusStationMarkFlag.value = false;
+      showBusLine1Flag.value = true;//默认编辑1号线
+      navigationOverlay.value.clearOverlays();
+      busStationOverlay.value.hide();
+      buildingOverlay.value.hide();
+      bus_line1.value.show();
+      for (let i = 0; i < line1Markers.length; i++) {
+        line1Markers[i].show();
+        line1Markers[i].setDraggable(true);
+      }
+    }
+
+    const saveEditBus = () => {
+      // Implement the logic to save the edited bus line
+      let line = {};
+      line.stations = [];
+      if (showBusLine2Flag.value) {
+        line2Markers.forEach((item ,index)=> {
+          line.id = 2;
+          // 将每个值的属性内容复制到line中
+          line.stations.push({
+            "stationName": item._originOpts.title,
+            "latitude": item._position[1],
+            "longitude": item._position[0],
+            "order": index+1,
+          });
+        });
+      }else {
+        line1Markers.forEach((item,index )=> {
+          line.id = 1;
+          // 将每个值的属性内容复制到line中
+          line.stations.push({
+            "stationName": item._originOpts.title,
+            "latitude": item._position[1],
+            "longitude": item._position[0],
+            "order": index+1
+          });
+        });
+      }
+      console.log(line)
+        request.post("/line-station", line).then(res => {
+          if (res.code === '200') {
+            const driving1 = new amap.value.Driving({});
+            console.log('saveEditBus 200ok')
+            if (line.id === 1) {
+              driving1.search(line1Markers[0]._position, line1Markers[line1Markers.length - 1]._position
+                , {waypoints: line1Markers.map(item => item._position)},function(status, result){
+                    if (status === 'complete') {
+                      let tmpPath = [];
+                      const steps = result.routes[0].steps;
+                      for (let i = 0; i < steps.length; i++) {
+                        tmpPath = tmpPath.concat(steps[i].path);
+                      }
+                      bus_line1.value.setPath(tmpPath)
+                    }
+                  })
+              line1Markers.forEach((item) => {
+                item.setDraggable(false);
+              });
+            }else {
+              driving1.search(line2Markers[0]._position, line2Markers[line2Markers.length - 1]._position
+                  , {waypoints: line2Markers.map(item => item._position)},function(status, result){
+                    if (status === 'complete') {
+                      let tmpPath = [];
+                      const steps = result.routes[0].steps;
+                      for (let i = 0; i < steps.length; i++) {
+                        tmpPath = tmpPath.concat(steps[i].path);
+                      }
+                      bus_line2.value.setPath(tmpPath)
+                    }
+                  })
+              line2Markers.forEach((item) => {
+                item.setDraggable(false);
+              });
+            }
+            showMainPage();
+            showBusStationMarkers(false);
+          }
+        }).catch((err) => {
+          console.log(err)
+        })
+        //保存完后显示校巴路线
+
+      }
+
+    const handleBusStationDraged = (event) => {
+      console.log(event.target._originOpts)
+    }
+      // Handle bus station marker drag logic
+      // console.log(event.target._originOpts.title);
+      // console.log(event.target._originOpts.position);
+      // console.log(event.target._originOpts.id);
+      // console.log(event.target._originOpts.line);
+      // console.log(event.target._originOpts.lineId);
+      // console.log(event.target._originOpts.lineName);
+      // console.log(event.target._originOpts.lineColor);
+      // console.log(event.target._originOpts.linePath);
+      // console.log(event.target._originOpts.linePathIndex);
+      // console.log(event.target._originOpts.linePathLength);
+      // console.log(event.target._originOpts.linePathIndex === 0);
+      // console.log(event.target._originOpts.linePathIndex === event.target._originOpts.linePathLength - 1);
+      // console.log(event.target._originOpts.linePathIndex === 0 || event.target._originOpts.linePathIndex === event.target._originOpts.linePathLength - 1);
+      // console.log(event.target._originOpts.linePathIndex === 0 || event.target._originOpts.linePathIndex === event.target._originOpts.linePathLength - 1 ? event.target._originOpts.linePathIndex : event.target._originOpts.linePathIndex - 1);
+      // console.log(event.target._originOpts.linePathIndex === 0 || event.target._originOpts.linePathIndex === event.target._originOpts.linePathLength - 1 ? event.target._originOpts.linePathIndex : event.target._originOpts.linePathIndex + 1);
+      // console.log(event.target._originOpts.linePathIndex === 0 || event.target._originOpts.linePathIndex === event.target._originOpts.linePathLength - 1 ? event.target._originOpts.linePathIndex : event.target._originOpts.linePathIndex - 1);
+      // console.log(event.target._originOpts.linePathIndex === 0 || event.target._originOpts.linePathIndex === event.target._originOpts.linePathLength - 1 ? event.target._originOpts.linePathIndex : event.target._originOpts.linePathIndex + 1);
+      // console.log(event.target._originOpts.linePathIndex === 0 || event.target._originOpts.linePathIndex === event.target._originOpts.linePathLength - 1 ? event.target._originOpts.linePathIndex : event.target._originOpts.linePathIndex - 1
     const handleNavigation = () => {
       navigationFlag.value = true;
       SideBarRef.value.handleNavigate();
@@ -379,11 +604,8 @@ export default {
             });
           }
           else if (navigationMethod === 'bus'){
-            // buildingOverlay.value.hide();
-            // busStationOverlay.value.show();
 
             const walking = new amap.value.Walking();
-
 
             const bus_route_mid = new amap.value.Polyline({
               strokeOpacity:1,
@@ -795,11 +1017,21 @@ export default {
                 busStationOverlay.value.show();
                 bus_line1.value.show();
                 bus_line2.value.show();
+              }else if(showBusLine1Flag.value) {
+                bus_line1.value.show();
+                bus_line2.value.hide();
+                line1Markers.forEach((marker) => {marker.show();});
+                line2Markers.forEach((marker) => {marker.hide();});
+              }else if(showBusLine2Flag.value) {
+                bus_line1.value.hide();
+                bus_line2.value.show();
+                line1Markers.forEach((marker) => {marker.hide();});
+                line2Markers.forEach((marker) => {marker.show();});
+                }
               }
               if(shownavigationFlag.value){
                 navigationOverlay.value.show();
               }
-            }
           });
           map.value.on('zoomend', () => {
             const zoom = map.value.getZoom(); // 获取当前地图的缩放级别
@@ -822,6 +1054,16 @@ export default {
                 busStationOverlay.value.show();
                 bus_line1.value.show();
                 bus_line2.value.show();
+              }else if(showBusLine1Flag.value) {
+                bus_line1.value.show();
+                line1Markers.forEach((marker) => {marker.show();});
+                bus_line2.value.hide();
+                line2Markers.forEach((marker) => {marker.hide();});
+              }else if(showBusLine2Flag.value) {
+                bus_line1.value.hide();
+                bus_line2.value.show();
+                line1Markers.forEach((marker) => {marker.hide();});
+                line2Markers.forEach((marker) => {marker.show();});
               }
               if(shownavigationFlag.value){
                 navigationOverlay.value.show();
@@ -954,16 +1196,26 @@ export default {
             position: [114.004261, 22.601895], title: "松禾体育馆", label: {content: "松禾体育馆"},});
 
 
-          xing_yuan.value = new AMap.Marker({
-            position: [114.002467,22.607841], title: "欣园", label: {content: "欣园"},});
-          hui_yuan.value = new AMap.Marker({
-            position: [114.003309,22.603185], title: "慧园", label: {content: "慧园"},});
-          chuang_yuan.value = new AMap.Marker({
-            position: [114.002011,22.603299], title: "创园", label: {content: "创园"},});
-          li_yuan.value = new AMap.Marker({
-            position: [114.000209,22.603582], title: "荔园", label: {content: "荔园"},});
-          student_dormitry.value = new AMap.Marker({
-            position: [113.998814,22.601809], title: "学生宿舍", label: {content: "学生宿舍"},});
+          xing_yuan_line1.value = new AMap.Marker({
+            position: [114.002467,22.607841], title: "欣园1站", label: {content: "欣园1站"},});
+          xing_yuan_line2.value = new AMap.Marker({
+            position: [114.002467,22.607841], title: "欣园2站", label: {content: "欣园2站"},});
+          hui_yuan_line1.value = new AMap.Marker({
+            position: [114.003309,22.603185], title: "慧园1站", label: {content: "慧园1站"},});
+          hui_yuan_line2.value = new AMap.Marker({
+            position: [114.003309,22.603185], title: "慧园2站", label: {content: "慧园2站"},});
+          chuang_yuan_line1.value = new AMap.Marker({
+            position: [114.002011,22.603299], title: "创园1站", label: {content: "创园1站"},});
+          chuang_yuan_line2.value = new AMap.Marker({
+            position: [114.002011,22.603299], title: "创园2站", label: {content: "创园2站"},});
+          li_yuan_line1.value = new AMap.Marker({
+            position: [114.000209,22.603582], title: "荔园1站", label: {content: "荔园1站"},});
+          li_yuan_line2.value = new AMap.Marker({
+            position: [114.000209,22.603582], title: "荔园2站", label: {content: "荔园2站"},});
+          student_dormitry_line1.value = new AMap.Marker({
+            position: [113.998814,22.601809], title: "学生宿舍1站", label: {content: "学生宿舍1站"},});
+          student_dormitry_line2.value = new AMap.Marker({
+            position: [113.998814,22.601809], title: "学生宿舍2站", label: {content: "学生宿舍2站"},});
           community_health_center.value = new AMap.Marker({
             position: [114.000751,22.60007], title: "社康中心", label: {content: "社康中心"},});
           faculty_cafeteria.value = new AMap.Marker({
@@ -980,8 +1232,10 @@ export default {
             position: [113.997424,22.594107], title: "行政楼", label: {content: "行政楼"},});
           gate7.value = new AMap.Marker({
             position: [113.995269,22.594563], title: "7号门", label: {content: "7号门"},});
-          research_building.value = new AMap.Marker({
-            position: [113.996637,22.596826], title: "科研楼", label: {content: "科研楼"},});
+          research_building_line1.value = new AMap.Marker({
+            position: [113.996637,22.596826], title: "科研楼1站", label: {content: "科研楼1站"},});
+          research_building_line2.value = new AMap.Marker({
+            position: [113.996637,22.596826], title: "科研楼2站", label: {content: "科研楼2站"},});
           COEN.value = new AMap.Marker({
             position: [113.995249,22.600512], title: "工学院北楼", label: {content: "工学院北楼"},});
           COES.value = new AMap.Marker({
@@ -989,23 +1243,30 @@ export default {
 
 
 
-          line1Markers.push(xing_yuan.value,hui_yuan.value, chuang_yuan.value, li_yuan.value,
-              student_dormitry.value, community_health_center.value, faculty_cafeteria.value,
+          line1Markers.push(xing_yuan_line1.value,hui_yuan_line1.value, chuang_yuan_line1.value, li_yuan_line1.value,
+              student_dormitry_line1.value, community_health_center.value, faculty_cafeteria.value,
               guest_house.value, gate3.value, gate2.value, gate1.value,
-              administration_building.value, gate7.value, research_building.value, COEN.value);
+              administration_building.value, gate7.value, research_building_line1.value, COEN.value);
 
-          line2Markers.push(xing_yuan.value, hui_yuan.value, chuang_yuan.value, li_yuan.value,
-              student_dormitry.value,  COES.value, research_building.value);
+          line2Markers.push(xing_yuan_line2.value, hui_yuan_line2.value, chuang_yuan_line2.value, li_yuan_line2.value,
+              student_dormitry_line2.value,  COES.value, research_building2.value);
 
-          busStationMarkers.push(xing_yuan.value, hui_yuan.value, chuang_yuan.value, li_yuan.value, student_dormitry.value, community_health_center.value, faculty_cafeteria.value, guest_house.value, gate3.value, gate2.value, gate1.value, administration_building.value, gate7.value, research_building.value, COEN.value,COES.value);
+          busStationMarkers.push(xing_yuan_line1.value,hui_yuan_line1.value, chuang_yuan_line1.value, li_yuan_line1.value,
+              student_dormitry_line1.value, community_health_center.value, faculty_cafeteria.value, guest_house.value,
+              gate3.value, gate2.value, gate1.value, administration_building.value, gate7.value, research_building_line1.value,
+              research_building_line2.value, COEN.value,COES.value,xing_yuan_line2.value, hui_yuan_line2.value, chuang_yuan_line2.value, li_yuan_line2.value,
+              student_dormitry_line2.value);
           for (let i = 0; i < busStationMarkers.length; i++) {
             busStationMarkers[i].setIcon('https://vdata.amap.com/icons/b18/1/2.png')
             busStationMarkers[i].setMap(map.value);
             busStationMarkers[i].hide();
             busStationOverlay.value.addOverlay(busStationMarkers[i]);
-            busStationMarkers[i].on('click', function (e) {
-              handleDormitoryClick(e);
+            busStationMarkers[i].on('dragend', function (e) {
+              handleBusStationDraged(e);
             })
+            // busStationMarkers[i].on('click', function (e) {
+            //   handleDormitoryClick(e);
+            // })
           }
 
 
@@ -1020,7 +1281,7 @@ export default {
               }
 
 
-              driving.search([114.002467,22.607841], [113.995249,22.600512], {waypoints: waypoints1},function(status, result) {
+              driving.search(waypoints1[0], waypoints1[waypoints1.length-1], {waypoints: waypoints1},function(status, result) {
                 if (status === 'complete') {
 
                   const steps = result.routes[0].steps;
@@ -1047,7 +1308,7 @@ export default {
               for (let i = 0; i < line2Markers.length; i++) {
                 waypoints2.push(line2Markers[i].getPosition());
               }
-              driving.search([114.002467,22.607841], [113.996637,22.596826], {waypoints: waypoints2},function(status, result) {
+              driving.search(waypoints2[0], waypoints2[waypoints2.length-1], {waypoints: waypoints2},function(status, result) {
                 if (status === 'complete') {
 
                   const steps = result.routes[0].steps;
@@ -1071,36 +1332,7 @@ export default {
             }
 
           });
-          //创建自定义标签
-          // var customLabel = document.createElement('div');
-          // customLabel.className = 'custom-label';
-          // customLabel.textContent = '第一教学楼';
-// // 自定义 CSS 样式
-//         var customStyle = document.createElement('style');
-//         customStyle.type = 'text/css';
-//         customStyle.innerHTML = '.custom-label {' +
-//             'background-color: #fff;' +
-//             'border: 2px solid #000;' +
-//             'padding: 5px;' +
-//             'font-size: 14px;' +
-//             'border-radius: 5px;' + // 设置边框圆角
-//             '}';
-//
-//         document.getElementsByTagName('head')[0].appendChild(customStyle);
-//
-// // 创建并设置 Marker
-//         teaching_building1.value = new AMap.Marker({
-//           position: [113.997303,22.595971],
-//           title: "第一教学楼",
-//           icon: {
-//             size: new AMap.Size(30, 30), // 设置图标大小
-//             image: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png' // 设置图标图片
-//           }
-//         });
-//         teaching_building1.value.setLabel({
-//           offset: new AMap.Pixel(0, -30), // 设置 Label 偏移量
-//           content: customLabel // 自定义 Label 元素
-//         });
+
 
           markers.push(library1.value,library2.value,library3.value,dormitory1.value,dormitory2.value,dormitory3.value,dormitory4.value,dormitory5.value,dormitory6.value,dormitory7.value,dormitory8.value,dormitory9.value,dormitory10.value,dormitory11.value,dormitory12.value,dormitory13.value,dormitory14.value,dormitory15.value,dormitory16.value,dormitory17.value,cafeteria1.value,cafeteria2.value,cafeteria3.value,cafeteria4.value,cafeteria5.value,cafeteria6.value,teaching_building1.value,teaching_building2.value,teaching_building3.value,research_building1.value,research_building2.value,research_building3.value,college1.value,college2.value,college3.value,college4.value,college5.value,college6.value,college7.value,college8.value,jiu_hua.value,office.value,faculty_apartment1.value,faculty_apartment2.value,faculty_apartment3.value,faculty_apartment4.value,faculty_apartment5.value,faculty_apartment6.value,gym1.value,gym2.value,gym3.value);
           for (let i = 0; i < markers.length; i++) {
@@ -1138,7 +1370,7 @@ export default {
       line4Markers,
       showBuildingMarkFlag,
       shownavigationFlag,
-
+      showEditBusFlag,
       title,
       introduction,
       username,
@@ -1151,6 +1383,7 @@ export default {
       submitReview,
       activeSidebar,
       navigateTo,
+      changeEditLine,
       showBusStationMarkers,
       ArrowLeft, House,ChatLineSquare,Timer,ShoppingCart,Search,Van,User
     };
