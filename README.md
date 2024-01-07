@@ -1,5 +1,5 @@
-# map
-
+# SustechMap
+This is a repo for sustech OOAD project
 ## Project setup
 ```
 npm install
